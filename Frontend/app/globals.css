@@ -1,0 +1,263 @@
+@import "tailwindcss";
+@import "react-datepicker/dist/react-datepicker.css";
+
+@theme {
+  --color-primary: var(--token-primary);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--token-secondary);
+  --color-secondary-foreground: #ffffff;
+
+  --color-teal-50: var(--token-theme-50);
+  --color-teal-100: var(--token-theme-100);
+  --color-teal-200: var(--token-theme-200);
+  --color-teal-300: var(--token-theme-300);
+  --color-teal-400: var(--token-theme-400);
+  --color-teal-500: var(--token-theme-500);
+  --color-teal-600: var(--token-theme-600);
+  --color-teal-700: var(--token-theme-700);
+  --color-teal-800: var(--token-theme-800);
+  --color-teal-900: var(--token-theme-900);
+  --color-teal-950: var(--token-theme-950);
+
+  --color-orange-50: var(--token-theme-50);
+  --color-orange-100: var(--token-theme-100);
+  --color-orange-200: var(--token-theme-200);
+  --color-orange-300: var(--token-theme-300);
+  --color-orange-400: var(--token-theme-400);
+  --color-orange-500: var(--token-theme-500);
+  --color-orange-600: var(--token-theme-600);
+  --color-orange-700: var(--token-theme-700);
+  --color-orange-800: var(--token-theme-800);
+  --color-orange-900: var(--token-theme-900);
+  --color-orange-950: var(--token-theme-950);
+}
+
+@custom-variant dark (&:where(.dark));
+
+:root {
+  /* Default to Teal theme */
+  --token-theme-50: #f0fdfa;
+  --token-theme-100: #ccfbf1;
+  --token-theme-200: #99f6e4;
+  --token-theme-300: #5eead4;
+  --token-theme-400: #2dd4bf;
+  --token-theme-500: #14b8a6;
+  --token-theme-600: #0d9488;
+  --token-theme-700: #0f766e;
+  --token-theme-800: #115e59;
+  --token-theme-900: #134e4a;
+  --token-theme-950: #042f2e;
+
+  --token-background: #f8fafc;
+  --token-secondary-surface: #f1f5f9;
+  --token-card: #ffffff;
+  --token-border: #e2e8f0;
+  --token-primary: var(--token-theme-600);
+  --token-secondary: var(--token-theme-500);
+  --token-success: #10b981;
+  --token-warning: #f59e0b;
+  --token-error: #ef4444;
+  --token-text-primary: #0f172a;
+  --token-text-secondary: #475569;
+
+  --background: var(--token-background);
+  --foreground: var(--token-text-primary);
+
+  --color-primary: var(--token-primary);
+  --color-secondary: var(--token-secondary);
+  --color-border: var(--token-border);
+  --color-success: var(--token-success);
+  --color-warning: var(--token-warning);
+  --color-destructive: var(--token-error);
+}
+
+.theme-teal {
+  --token-theme-50: #f0fdfa;
+  --token-theme-100: #ccfbf1;
+  --token-theme-200: #99f6e4;
+  --token-theme-300: #5eead4;
+  --token-theme-400: #2dd4bf;
+  --token-theme-500: #14b8a6;
+  --token-theme-600: #0d9488;
+  --token-theme-700: #0f766e;
+  --token-theme-800: #115e59;
+  --token-theme-900: #134e4a;
+  --token-theme-950: #042f2e;
+
+  --token-primary: var(--token-theme-600);
+  --token-secondary: var(--token-theme-500);
+}
+
+.theme-orange {
+  --token-theme-50: #fff7ed;
+  --token-theme-100: #ffedd5;
+  --token-theme-200: #fed7aa;
+  --token-theme-300: #fdba74;
+  --token-theme-400: #fb923c;
+  --token-theme-500: #f97316;
+  --token-theme-600: #ea580c;
+  --token-theme-700: #c2410c;
+  --token-theme-800: #9a3412;
+  --token-theme-900: #7c2d12;
+  --token-theme-950: #431407;
+
+  --token-primary: var(--token-theme-600);
+  --token-secondary: var(--token-theme-500);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: 'rlig' 1, 'calt' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* UX Best Practice: Ensure all interactive buttons and elements have pointer cursors */
+button,
+a,
+select,
+[role="button"],
+input[type="button"],
+input[type="submit"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* Modern scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-muted-foreground));
+}
+
+/* Focus ring styling - modern, subtle */
+*:focus-visible {
+  outline: 2px solid rgb(var(--color-ring));
+  outline-offset: 2px;
+}
+
+/* Selection styling */
+::selection {
+  background: rgb(var(--color-primary) / 0.1);
+  color: rgb(var(--color-foreground));
+}
+
+/* Input and form element base styles */
+input, textarea, select {
+  font-family: inherit;
+  font-feature-settings: inherit;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tone down bold weights slightly per user request (excluding page headings) */
+.font-semibold {
+  font-weight: 500 !important;
+}
+
+.font-bold:not(h1) {
+  font-weight: 600 !important;
+}
+
+.font-extrabold:not(h1) {
+  font-weight: 700 !important;
+}
+
+/* Made with Bob */
+
+/* Premium View Transition Cross-Fade for zero eye strain theme switching */
+::view-transition-old(root) {
+  animation: 300ms cubic-bezier(0.4, 0, 0.2, 1) both fade-out;
+}
+::view-transition-new(root) {
+  animation: 300ms cubic-bezier(0.4, 0, 0.2, 1) both fade-in;
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media print {
+  /* Hide all dashboard/page elements by default */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Render only the certificate modal and its content */
+  #print-certificate-modal,
+  #print-certificate-modal * {
+    visibility: visible;
+  }
+  
+  /* Reset the modal overlay layout to take full screen with no backdrops */
+  #print-certificate-modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: none !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Make sure the card looks like a clean paper document */
+  .print-certificate-card {
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Exclude action buttons from print layout */
+  .print-exclude {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Hide default headers/footers and force landscape */
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+}

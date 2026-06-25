@@ -1,0 +1,41 @@
+# ===== Frontend =====
+Frontend/node_modules/
+Frontend/.next/
+Frontend/out/
+Frontend/build/
+Frontend/.env.local
+Frontend/.env.development.local
+Frontend/.env.test.local
+Frontend/.env.production.local
+Frontend/*.tsbuildinfo
+Frontend/next-env.d.ts
+
+# ===== Backend =====
+Backend/**/bin/
+Backend/**/obj/
+Backend/**/.vs/
+Backend/**/*.user
+Backend/**/*.suo
+
+# ===== Environment Secrets =====
+*.env.local
+.env.local
+
+# ===== IDE / OS =====
+.vs/
+.vscode/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# ===== Submission / Temp =====
+*.zip
+scratch/
+spec_items.json
+spec_verification_report.md
