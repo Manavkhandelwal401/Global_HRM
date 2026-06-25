@@ -7,9 +7,11 @@ import { StatCard } from '@/components/shared/StatCard';
 import { ModuleCard } from '@/components/shared/ModuleCard';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { useSession } from '@/context/SessionContext';
+import { AttendanceTable } from '@/components/AttendanceTable';
 import { CheckCircle2, Calendar, Check, Ban, X, ChevronDown, UserPlus, Plus } from 'lucide-react';
 import { GET_MY_LEAVE_REQUESTS, GET_PENDING_LEAVE_APPROVALS } from '@/graphql/query/leave';
 import { APPROVE_LEAVE_REQUEST, REJECT_LEAVE_REQUEST, CANCEL_LEAVE_REQUEST } from '@/graphql/mutation/leave';
+import { GET_TODAY_ATTENDANCE, GET_MY_ATTENDANCE, GET_TEAM_ATTENDANCE } from "@/graphql/query/attendance";
 import { GET_MY_EXPENSES, GET_PENDING_EXPENSE_APPROVALS } from '@/graphql/query/expense';
 import { APPROVE_EXPENSE, REJECT_EXPENSE } from '@/graphql/mutation/expense';
 import { FormModal } from '@/components/shared/FormModal';
@@ -159,6 +161,21 @@ export default function DashboardPage() {
     variables: { managerId: employeeId },
     skip: !employeeId || !isManagement || useDemoMode,
     fetchPolicy: 'cache-and-network',
+  });
+
+  // Attendance data fetching – real‑time via polling every 30 seconds
+  const { data: myAttendanceData, loading: myAttendanceLoading } = useQuery<any, any>(GET_MY_ATTENDANCE, {
+    variables: { employeeId, startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), endDate: new Date().toISOString() },
+    skip: !employeeId || useDemoMode,
+    fetchPolicy: 'cache-and-network',
+    pollInterval: 30000,
+  });
+
+  const { data: teamAttendanceData, loading: teamAttendanceLoading } = useQuery<any, any>(GET_TEAM_ATTENDANCE, {
+    variables: { managerId: employeeId, date: new Date().toISOString(), statusFilter: null },
+    skip: !employeeId || !isManagement || useDemoMode,
+    fetchPolicy: 'cache-and-network',
+    pollInterval: 30000,
   });
 
   // Real mode mutations
@@ -340,6 +357,17 @@ export default function DashboardPage() {
   );
   const displayedActivities = showAllLeaves ? sortedActivities : sortedActivities.slice(0, 3);
 
+  // Prepare attendance records for the table
+  const attendanceRecords = (isManagement ? teamAttendanceData?.getTeamAttendance ?? [] : myAttendanceData?.getMyAttendance ?? []).map((rec: any) => ({
+    employeeName: rec.employeeName,
+    employeeId: rec.employeeId,
+    department: rec.department || 'N/A',
+    date: rec.date?.split('T')[0] ?? '',
+    checkIn: rec.clockIn ?? null,
+    checkOut: rec.clockOut ?? null,
+    workingHours: rec.productiveHours ?? '-',
+    status: rec.status ?? '-',
+  }));
 
   // ---- Demo mode action handlers ----
   const handleDemoCancel = (requestId: string) => {
@@ -793,14 +821,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <ModuleCard
-            title="Mark Attendance"
-            description="Clock in for today"
-            icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
