@@ -139,9 +139,9 @@ Total Deductions      : INR 15,000.00
 Net Take-Home Salary  : INR 70,000.00
 ==================================================
 This is a secure system-generated PDF copy.
-    `], {type: 'application/pdf'});
+    `], {type: 'text/plain'});
     element.href = URL.createObjectURL(file);
-    element.download = `payslip_${id}.pdf`;
+    element.download = `payslip_${id}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
