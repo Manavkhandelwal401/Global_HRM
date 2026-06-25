@@ -67,6 +67,13 @@ export const navigationConfig: Record<EmployeeRole, NavigationItem[]> = {
       icon: 'credit-card',
       roles: ['Employee', 'Manager', 'HR', 'Admin'],
     },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      path: '/expenses',
+      icon: 'banknotes',
+      roles: ['Employee', 'Manager', 'HR', 'Admin'],
+    },
   ],
   Manager: [
     {
@@ -123,6 +130,13 @@ export const navigationConfig: Record<EmployeeRole, NavigationItem[]> = {
       label: 'Payroll',
       path: '/payroll',
       icon: 'credit-card',
+      roles: ['Employee', 'Manager', 'HR', 'Admin'],
+    },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      path: '/expenses',
+      icon: 'banknotes',
       roles: ['Employee', 'Manager', 'HR', 'Admin'],
     },
   ],
@@ -183,6 +197,13 @@ export const navigationConfig: Record<EmployeeRole, NavigationItem[]> = {
       icon: 'credit-card',
       roles: ['Employee', 'Manager', 'HR', 'Admin'],
     },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      path: '/expenses',
+      icon: 'banknotes',
+      roles: ['Employee', 'Manager', 'HR', 'Admin'],
+    },
   ],
   Admin: [
     {
@@ -239,6 +260,13 @@ export const navigationConfig: Record<EmployeeRole, NavigationItem[]> = {
       label: 'Payroll',
       path: '/payroll',
       icon: 'credit-card',
+      roles: ['Employee', 'Manager', 'HR', 'Admin'],
+    },
+    {
+      id: 'expenses',
+      label: 'Expenses',
+      path: '/expenses',
+      icon: 'banknotes',
       roles: ['Employee', 'Manager', 'HR', 'Admin'],
     },
   ],

@@ -167,8 +167,8 @@ export default function PayrollPage(): React.ReactElement {
     divider();
     doc.text("This is a secure system-generated PDF document.", 20, y);
     
-    const safeName = targetPayslip.employeeName.replace(/\s+/g, '_');
-    const period = new Date(targetPayslip.payPeriodStart).toLocaleString('default', { month: 'short', year: 'numeric' });
+    const safeName = (targetPayslip?.employeeName || "Mayank_Khandelwal").replace(/\s+/g, '_');
+    const period = new Date(targetPayslip?.payPeriodStart || new Date()).toLocaleString('default', { month: 'short', year: 'numeric' });
     doc.save(`payslip_${safeName}_${period}.pdf`);
   };
 
