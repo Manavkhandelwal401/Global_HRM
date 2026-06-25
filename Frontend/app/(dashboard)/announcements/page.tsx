@@ -28,10 +28,20 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [mounted, setMounted] = useState(false);
 
+  // User-specific persistence keys
+  const deletedKey = `announcements-deleted-${user?.id || 'guest'}`;
+  const acknowledgedKey = `announcements-acknowledged-${user?.id || 'guest'}`;
+
   useEffect(() => {
     const saved = localStorage.getItem("company-announcements");
+    // Deleted IDs for this user
+    const deletedIds: string[] = JSON.parse(localStorage.getItem(deletedKey) || '[]');
+    // Acknowledged IDs for this user
+    const acknowledgedIds: string[] = JSON.parse(localStorage.getItem(acknowledgedKey) || '[]');
+
+    let base: Announcement[];
     if (saved) {
-      setAnnouncements(JSON.parse(saved));
+      base = JSON.parse(saved);
     } else {
       const defaultAnnouncements: Announcement[] = [
         {
@@ -57,7 +67,7 @@ export default function AnnouncementsPage() {
           createdBy: 'hr-admin',
           createdByName: 'HR Department',
           expiryDate: '2026-12-31',
-          isAcknowledged: true,
+          isAcknowledged: false,
           createdAt: '2026-06-10T09:00:00Z'
         },
         {
@@ -86,11 +96,18 @@ export default function AnnouncementsPage() {
           createdAt: '2026-06-01T08:00:00Z'
         }
       ];
-      setAnnouncements(defaultAnnouncements);
+      base = defaultAnnouncements;
       localStorage.setItem("company-announcements", JSON.stringify(defaultAnnouncements));
     }
+
+    // Apply user-specific deletions and acknowledgements
+    const merged = base
+      .filter(a => !deletedIds.includes(a.id))
+      .map(a => ({ ...a, isAcknowledged: a.isAcknowledged || acknowledgedIds.includes(a.id) }));
+
+    setAnnouncements(merged);
     setMounted(true);
-  }, []);
+  }, [deletedKey, acknowledgedKey]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
@@ -125,6 +142,11 @@ export default function AnnouncementsPage() {
   const [announcementToDelete, setAnnouncementToDelete] = useState<string | null>(null);
 
   const handleAcknowledge = (announcement: Announcement) => {
+    // Persist acknowledged ID in user-specific key
+    const existing: string[] = JSON.parse(localStorage.getItem(acknowledgedKey) || '[]');
+    if (!existing.includes(announcement.id)) {
+      localStorage.setItem(acknowledgedKey, JSON.stringify([...existing, announcement.id]));
+    }
     setAnnouncements(prev => {
       const next = prev.map(a => a.id === announcement.id ? { ...a, isAcknowledged: true } : a);
       localStorage.setItem("company-announcements", JSON.stringify(next));
@@ -138,6 +160,11 @@ export default function AnnouncementsPage() {
 
   const confirmDelete = () => {
     if (announcementToDelete) {
+      // Persist deleted ID in user-specific key so it stays gone after refresh/re-login
+      const existing: string[] = JSON.parse(localStorage.getItem(deletedKey) || '[]');
+      if (!existing.includes(announcementToDelete)) {
+        localStorage.setItem(deletedKey, JSON.stringify([...existing, announcementToDelete]));
+      }
       setAnnouncements(prev => {
         const next = prev.filter(a => a.id !== announcementToDelete);
         localStorage.setItem("company-announcements", JSON.stringify(next));

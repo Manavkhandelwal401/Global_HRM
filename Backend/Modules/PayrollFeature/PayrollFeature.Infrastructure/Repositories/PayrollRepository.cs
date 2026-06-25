@@ -7,6 +7,8 @@ using HRMS.Core.Telemetry;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
+using EmployeeFeature.Domain;
+
 namespace PayrollFeature.Infrastructure.Repositories
 {
     public class PayrollRepository : PostgresRepository<PayrollRecord>, IPayrollRepository
@@ -32,6 +34,12 @@ namespace PayrollFeature.Infrastructure.Repositories
         {
             return await _context.Set<PayrollRecord>()
                 .FirstOrDefaultAsync(pr => pr.Id == payslipId);
+        }
+        public async Task<string> GetEmployeeNameAsync(string employeeId)
+        {
+            var employee = await _context.Set<Employee>()
+                .FirstOrDefaultAsync(e => e.Id == employeeId);
+            return employee?.Name ?? string.Empty;
         }
     }
 }

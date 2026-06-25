@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\Modules\LeaveFeature\LeaveFeature.Domain\LeaveFeature.Domain.csproj" />
     <ProjectReference Include="..\..\Modules\TrainingFeature\TrainingFeature.Domain\TrainingFeature.Domain.csproj" />
     <ProjectReference Include="..\..\Modules\AnnouncementFeature\AnnouncementFeature.Domain\AnnouncementFeature.Domain.csproj" />
+    <ProjectReference Include="..\..\Modules\PayrollFeature\PayrollFeature.Domain\PayrollFeature.Domain.csproj" />
   </ItemGroup>
 
 </Project>

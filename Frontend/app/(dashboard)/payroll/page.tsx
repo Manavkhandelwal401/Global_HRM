@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { jsPDF } from 'jspdf';
 import { useQuery } from '@apollo/client/react';
 import { GET_MY_PAYSLIPS } from '@/graphql/query/payroll';
 import { LoadingState } from '@/components/shared/LoadingState';
@@ -43,17 +44,39 @@ interface Payslip {
 export default function PayrollPage(): React.ReactElement {
   const { user } = useSession();
   const currentRole = user?.role || 'Employee';
+  const currentEmployeeId = user?.id || '';
   const isAdminOrHR = currentRole === 'Admin' || currentRole === 'HR';
+  const useDemoMode = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
 
   const [activeTab, setActiveTab] = useState<'payslips' | 'documents' | 'compliance'>('payslips');
   const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null);
 
-  // For demonstration/mock fallback if API/GraphQL isn't returning data
+  // Dynamic mock payslips — always generated for the currently logged-in user
+  // so they are never empty regardless of session ID
   const mockPayslips: Payslip[] = [
+    // Last 3 months for the current user
     {
-      id: 'pay-001',
-      employeeId: 'EMP-001',
-      employeeName: 'Mayank Khandelwal',
+      id: `${currentEmployeeId}-pay-jun`,
+      employeeId: currentEmployeeId,
+      employeeName: user?.name || 'Employee',
+      payPeriodStart: '2026-06-01',
+      payPeriodEnd: '2026-06-30',
+      basicPay: 50000,
+      hra: 20000,
+      allowances: 15000,
+      grossPay: 85000,
+      pf: 6000,
+      incomeTax: 8000,
+      esi: 1000,
+      deductions: 15000,
+      netPay: 70000,
+      status: 'processing',
+      createdAt: '2026-06-25T10:00:00Z',
+    },
+    {
+      id: `${currentEmployeeId}-pay-may`,
+      employeeId: currentEmployeeId,
+      employeeName: user?.name || 'Employee',
       payPeriodStart: '2026-05-01',
       payPeriodEnd: '2026-05-31',
       basicPay: 50000,
@@ -69,82 +92,84 @@ export default function PayrollPage(): React.ReactElement {
       createdAt: '2026-05-31T18:00:00Z',
     },
     {
-      id: 'pay-002',
-      employeeId: 'EMP-002',
-      employeeName: 'John Doe',
-      payPeriodStart: '2026-05-01',
-      payPeriodEnd: '2026-05-31',
-      basicPay: 45000,
-      hra: 18000,
-      allowances: 12000,
-      grossPay: 75000,
-      pf: 5400,
-      incomeTax: 6000,
+      id: `${currentEmployeeId}-pay-apr`,
+      employeeId: currentEmployeeId,
+      employeeName: user?.name || 'Employee',
+      payPeriodStart: '2026-04-01',
+      payPeriodEnd: '2026-04-30',
+      basicPay: 50000,
+      hra: 20000,
+      allowances: 15000,
+      grossPay: 85000,
+      pf: 6000,
+      incomeTax: 8000,
       esi: 1000,
-      deductions: 12400,
-      netPay: 62600,
+      deductions: 15000,
+      netPay: 70000,
       status: 'paid',
-      createdAt: '2026-05-31T18:00:00Z',
+      createdAt: '2026-04-30T18:00:00Z',
     },
-    {
-      id: 'pay-003',
-      employeeId: 'EMP-003',
-      employeeName: 'Jane Smith',
-      payPeriodStart: '2026-05-01',
-      payPeriodEnd: '2026-05-31',
-      basicPay: 60000,
-      hra: 25000,
-      allowances: 20000,
-      grossPay: 105000,
-      pf: 7200,
-      incomeTax: 12000,
-      esi: 1500,
-      deductions: 20700,
-      netPay: 84300,
-      status: 'processing',
-      createdAt: '2026-05-31T18:00:00Z',
-    }
   ];
 
   const { data, loading, error } = useQuery<any, any>(GET_MY_PAYSLIPS, {
-    variables: { employeeId: 'EMP-001' },
+    variables: { employeeId: currentEmployeeId },
+    skip: !currentEmployeeId || useDemoMode,
+    fetchPolicy: 'cache-and-network',
     errorPolicy: 'all'
   });
 
-  const payslips: Payslip[] = data?.getMyPayslips || mockPayslips;
+  // Demo mode: use mock data filtered by current user; Real mode: use API data, fallback to mock
+  const rawPayslips: Payslip[] = useDemoMode
+    ? mockPayslips
+    : (data?.getMyPayslips?.length ? data.getMyPayslips : mockPayslips);
+
+  const payslips: Payslip[] = isAdminOrHR
+    ? rawPayslips
+    : rawPayslips.filter(p => p.employeeId === currentEmployeeId || p.employeeName === user?.name);
 
   const handleDownload = (id: string) => {
-    const element = document.createElement("a");
-    const file = new Blob([`
-==================================================
-           PROPVIVO HRMS - PAYSLIP RECEIPT
-==================================================
-Payslip ID  : ${id}
-Employee    : Mayank Khandelwal
-Employee ID : EMP-001
-Status      : Paid
-==================================================
-Basic Pay   : INR 50,000.00
-HRA         : INR 20,000.00
-Allowances  : INR 15,000.00
---------------------------------------------------
-Gross Salary: INR 85,000.00
-==================================================
-Provident Fund (PF)   : INR 6,000.00
-Income Tax (TDS)      : INR 8,000.00
-ESI                   : INR 1,000.00
---------------------------------------------------
-Total Deductions      : INR 15,000.00
-==================================================
-Net Take-Home Salary  : INR 70,000.00
-==================================================
-This is a secure system-generated PDF copy.
-    `], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `payslip_${id}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const targetPayslip = payslips.find(p => p.id === id) || selectedPayslip;
+    const doc = new jsPDF();
+    doc.setFont("courier", "bold");
+    doc.setFontSize(16);
+    doc.text("PROPVIVO HRMS - PAYSLIP RECEIPT", 20, 20);
+    doc.setFont("courier", "normal");
+    doc.setFontSize(11);
+    
+    let y = 35;
+    const line = (label: string, value: string) => {
+      doc.text(`${label.padEnd(22, ' ')}: ${value}`, 20, y);
+      y += 8;
+    };
+    
+    const divider = () => {
+      doc.text("==================================================", 20, y);
+      y += 8;
+    };
+
+    divider();
+    line("Payslip ID", id);
+    line("Employee", targetPayslip?.employeeName || "Mayank Khandelwal");
+    line("Employee ID", targetPayslip?.employeeId || "EMP-001");
+    line("Status", targetPayslip?.status || "Paid");
+    divider();
+    line("Basic Pay", `INR ${(targetPayslip?.basicPay || 50000).toLocaleString('en-IN')}`);
+    line("HRA", `INR ${(targetPayslip?.hra || 20000).toLocaleString('en-IN')}`);
+    line("Allowances", `INR ${(targetPayslip?.allowances || 15000).toLocaleString('en-IN')}`);
+    line("Gross Salary", `INR ${(targetPayslip?.grossPay || 85000).toLocaleString('en-IN')}`);
+    divider();
+    line("Provident Fund (PF)", `INR ${(targetPayslip?.pf || 6000).toLocaleString('en-IN')}`);
+    line("Income Tax (TDS)", `INR ${(targetPayslip?.incomeTax || 8000).toLocaleString('en-IN')}`);
+    line("ESI", `INR ${(targetPayslip?.esi || 1000).toLocaleString('en-IN')}`);
+    line("Total Deductions", `INR ${(targetPayslip?.deductions || 15000).toLocaleString('en-IN')}`);
+    divider();
+    line("Net Take-Home Salary", `INR ${(targetPayslip?.netPay || 70000).toLocaleString('en-IN')}`);
+    divider();
+    doc.text("This is a secure system-generated PDF document.", 20, y);
+    
+    const safeName = targetPayslip.employeeName.replace(/\s+/g, '_');
+    const period = new Date(targetPayslip.payPeriodStart).toLocaleString('default', { month: 'short', year: 'numeric' });
+    doc.save(`payslip_${safeName}_${period}.pdf`);
   };
 
   const handleDownloadTaxDoc = (name: string) => {
@@ -270,10 +295,13 @@ This file is a mock PDF placeholder for tax audit purposes.
                         </div>
                         <div>
                           <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-                            {payslip.employeeName}
+                            {payslip.employeeName} —{' '}
+                            {new Date(payslip.payPeriodStart).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
                           </p>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            ID: {payslip.employeeId} • Period: {payslip.payPeriodStart} to {payslip.payPeriodEnd}
+                            {new Date(payslip.payPeriodStart).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            {' – '}
+                            {new Date(payslip.payPeriodEnd).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </p>
                         </div>
                       </div>

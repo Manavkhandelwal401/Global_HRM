@@ -46,6 +46,9 @@ export default function AttendancePage() {
   } = useQuery<any, any>(GET_TODAY_ATTENDANCE, {
     variables: { employeeId: user?.id || "EMP-001" },
     skip: !user?.id || useDemoMode,
+    fetchPolicy: "cache-and-network",
+    // Auto-refresh every 5 minutes so stale data doesn't linger
+    pollInterval: 5 * 60 * 1000,
   });
 
   const {
@@ -74,6 +77,23 @@ export default function AttendancePage() {
     },
   });
 
+  // Midnight auto-reset for real API mode: refetch when the calendar day changes
+  useEffect(() => {
+    if (useDemoMode) return;
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setDate(now.getDate() + 1);
+    midnight.setHours(0, 0, 1, 0); // 00:00:01 next day
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+    const timer = setTimeout(() => {
+      refetchToday();
+    }, msUntilMidnight);
+    return () => clearTimeout(timer);
+  }, [useDemoMode, refetchToday]);
+
+  // Helper: today's date string YYYY-MM-DD (local)
+  const todayDateStr = new Date().toLocaleDateString("en-CA"); // "2026-06-25"
+
   useEffect(() => {
     if (!useDemoMode) return;
 
@@ -81,7 +101,24 @@ export default function AttendancePage() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setDemoTodayRecord(parsed.today ?? null);
+        // --- Daily reset: if today's record is from a previous day, clear it ---
+        const savedToday = parsed.today;
+        let todayRecord: AttendanceRecord | null = null;
+        if (savedToday) {
+          const savedDate = new Date(savedToday.date).toLocaleDateString("en-CA");
+          if (savedDate === todayDateStr) {
+            todayRecord = savedToday;
+          } else {
+            // Old day — move completed record to history, reset today
+            const alreadyInHistory = (parsed.history ?? []).some((h: AttendanceRecord) => h.id === savedToday.id);
+            if (!alreadyInHistory && savedToday.clockOut) {
+              parsed.history = [savedToday, ...(parsed.history ?? [])].slice(0, 30);
+            }
+            parsed.today = null;
+            localStorage.setItem("demo-attendance", JSON.stringify(parsed));
+          }
+        }
+        setDemoTodayRecord(todayRecord);
         setDemoHistory(parsed.history ?? []);
       } catch {
         // ignore malformed storage
@@ -94,9 +131,9 @@ export default function AttendancePage() {
         id: "demo-1",
         employeeId: user?.id || "EMP-001",
         employeeName: user?.name || "Demo User",
-        date: new Date().toISOString(),
-        clockIn: "2024-01-10T09:00:00.000Z",
-        clockOut: "2024-01-10T18:00:00.000Z",
+        date: new Date(Date.now() - 86400000).toISOString(),
+        clockIn: new Date(Date.now() - 86400000 + 9 * 3600000).toISOString(),
+        clockOut: new Date(Date.now() - 86400000 + 18 * 3600000).toISOString(),
         productiveHours: 8,
         breakHours: 1,
         overtimeHours: 0,
@@ -106,10 +143,10 @@ export default function AttendancePage() {
         id: "demo-2",
         employeeId: user?.id || "EMP-001",
         employeeName: user?.name || "Demo User",
-        date: new Date(Date.now() - 86400000).toISOString(),
-        clockIn: "2024-01-09T09:30:00.000Z",
-        clockOut: "2024-01-09T17:30:00.000Z",
-        productiveHours: 7.5,
+        date: new Date(Date.now() - 2 * 86400000).toISOString(),
+        clockIn: new Date(Date.now() - 2 * 86400000 + 9.5 * 3600000).toISOString(),
+        clockOut: new Date(Date.now() - 2 * 86400000 + 17.5 * 3600000).toISOString(),
+        productiveHours: 7,
         breakHours: 1,
         overtimeHours: 0,
         status: "Late",
@@ -117,7 +154,7 @@ export default function AttendancePage() {
     ];
     setDemoHistory(seededHistory);
     localStorage.setItem("demo-attendance", JSON.stringify({ today: null, history: seededHistory }));
-  }, [useDemoMode, user?.id, user?.name]);
+  }, [useDemoMode, user?.id, user?.name, todayDateStr]);
 
   const todayAttendance: AttendanceRecord | null = useDemoMode ? demoTodayRecord ?? null : todayData?.getTodayAttendance;
   const attendanceHistory: AttendanceRecord[] = useDemoMode ? demoHistory : historyData?.getMyAttendance || [];

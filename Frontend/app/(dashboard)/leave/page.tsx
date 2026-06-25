@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
@@ -182,6 +182,7 @@ export default function LeavePage() {
     setDemoRequests(baselineRequests);
     setDemoApprovals(baselineApprovals);
     localStorage.setItem("demo-leaves", JSON.stringify({ balances: baselineBalances, requests: baselineRequests, approvals: baselineApprovals }));
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
   }, [useDemoMode, user?.id, user?.name]);
 
   useEffect(() => {
@@ -241,6 +242,7 @@ export default function LeavePage() {
       setDemoRequests(nextRequests);
       setDemoBalances(nextBalances);
       localStorage.setItem("demo-leaves", JSON.stringify({ balances: nextBalances, requests: nextRequests, approvals: demoApprovals }));
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
       setIsRequestModalOpen(false);
       resetForm();
       return;
@@ -273,6 +275,7 @@ export default function LeavePage() {
       setDemoApprovals(nextApprovals);
       setDemoRequests(nextRequests);
       localStorage.setItem("demo-leaves", JSON.stringify({ balances: demoBalances, requests: nextRequests, approvals: nextApprovals }));
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
       setIsApprovalModalOpen(false);
       setSelectedRequest(null);
       setApprovalComments("");
@@ -304,6 +307,7 @@ export default function LeavePage() {
       setDemoApprovals(nextApprovals);
       setDemoRequests(nextRequests);
       localStorage.setItem("demo-leaves", JSON.stringify({ balances: demoBalances, requests: nextRequests, approvals: nextApprovals }));
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
       setIsApprovalModalOpen(false);
       setSelectedRequest(null);
       setApprovalComments("");
@@ -344,6 +348,7 @@ export default function LeavePage() {
       setDemoRequests(nextRequests);
       setDemoBalances(nextBalances);
       localStorage.setItem("demo-leaves", JSON.stringify({ balances: nextBalances, requests: nextRequests, approvals: demoApprovals }));
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
       return;
     }
 

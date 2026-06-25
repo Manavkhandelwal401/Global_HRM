@@ -6,6 +6,7 @@ namespace PayrollFeature.Domain
     {
         Task<IEnumerable<PayrollRecord>> GetEmployeePayslipsAsync(string employeeId);
         Task<PayrollRecord?> GetPayrollByIdAsync(string payslipId);
+        Task<string> GetEmployeeNameAsync(string employeeId);
     }
 }
 

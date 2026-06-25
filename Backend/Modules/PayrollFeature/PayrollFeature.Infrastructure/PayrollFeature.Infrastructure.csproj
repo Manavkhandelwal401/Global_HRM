@@ -7,5 +7,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Shared\HRMS.Shared.Core\HRMS.Core.Postgres\HRMS.Core.Postgres.csproj" />
     <ProjectReference Include="..\PayrollFeature.Application\PayrollFeature.Application.csproj" />
+    <ProjectReference Include="..\..\..\Modules\EmployeeFeature\EmployeeFeature.Domain\EmployeeFeature.Domain.csproj" />
   </ItemGroup>
 </Project>

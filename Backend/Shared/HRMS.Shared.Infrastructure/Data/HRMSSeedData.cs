@@ -10,6 +10,8 @@ using AnnouncementFeature.Domain;
 using AnnouncementFeature.Domain.Enums;
 using HRMS.Shared.Domain.Enum;
 using Microsoft.EntityFrameworkCore;
+using PayrollFeature.Domain;
+using PayrollFeature.Domain.Enums;
 
 namespace HRMS.Shared.Infrastructure.Data
 {
@@ -260,6 +262,233 @@ namespace HRMS.Shared.Infrastructure.Data
             };
 
             modelBuilder.Entity<Announcement>().HasData(announcements);
+
+            // Seed Payroll Records
+            var payrollRecords = new[]
+            {
+                // === MAY 2026 ===
+                new PayrollRecord
+                {
+                    Id = "pay-001-may",
+                    EmployeeId = "EMP-001",
+                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-001-may-lower",
+                    EmployeeId = "emp-001",
+                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                // === APRIL 2026 ===
+                new PayrollRecord
+                {
+                    Id = "pay-001-apr",
+                    EmployeeId = "EMP-001",
+                    PayPeriodStart = new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 4, 30, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-001-apr-lower",
+                    EmployeeId = "emp-001",
+                    PayPeriodStart = new DateTime(2026, 4, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 4, 30, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                // === MARCH 2026 ===
+                new PayrollRecord
+                {
+                    Id = "pay-001-mar",
+                    EmployeeId = "EMP-001",
+                    PayPeriodStart = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 3, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-001-mar-lower",
+                    EmployeeId = "emp-001",
+                    PayPeriodStart = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 3, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                // === FEBRUARY 2026 ===
+                new PayrollRecord
+                {
+                    Id = "pay-001-feb",
+                    EmployeeId = "EMP-001",
+                    PayPeriodStart = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-001-feb-lower",
+                    EmployeeId = "emp-001",
+                    PayPeriodStart = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 50000,
+                    HRA = 20000,
+                    Allowances = 15000,
+                    GrossPay = 85000,
+                    PF = 6000,
+                    IncomeTax = 8000,
+                    ESI = 1000,
+                    Deductions = 15000,
+                    NetPay = 70000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-002",
+                    EmployeeId = "EMP-002",
+                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 45000,
+                    HRA = 18000,
+                    Allowances = 12000,
+                    GrossPay = 75000,
+                    PF = 5400,
+                    IncomeTax = 6000,
+                    ESI = 1000,
+                    Deductions = 12400,
+                    NetPay = 62600,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-003",
+                    EmployeeId = "EMP-003",
+                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 60000,
+                    HRA = 25000,
+                    Allowances = 20000,
+                    GrossPay = 105000,
+                    PF = 7200,
+                    IncomeTax = 12000,
+                    ESI = 1500,
+                    Deductions = 20700,
+                    NetPay = 84300,
+                    Status = PayrollStatus.Processed,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-005",
+                    EmployeeId = "EMP-005",
+                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 75000,
+                    HRA = 30000,
+                    Allowances = 25000,
+                    GrossPay = 130000,
+                    PF = 9000,
+                    IncomeTax = 15000,
+                    ESI = 2000,
+                    Deductions = 26000,
+                    NetPay = 104000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                },
+                new PayrollRecord
+                {
+                    Id = "pay-005-lower",
+                    EmployeeId = "emp-005",
+                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
+                    BasicPay = 75000,
+                    HRA = 30000,
+                    Allowances = 25000,
+                    GrossPay = 130000,
+                    PF = 9000,
+                    IncomeTax = 15000,
+                    ESI = 2000,
+                    Deductions = 26000,
+                    NetPay = 104000,
+                    Status = PayrollStatus.Paid,
+                    CreatedOn = DateTime.UtcNow
+                }
+            };
+
+            modelBuilder.Entity<PayrollRecord>().HasData(payrollRecords);
         }
     }
 }
