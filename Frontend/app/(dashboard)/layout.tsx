@@ -1,16 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { type EmployeeRole } from '@/lib/navigation/navigationConfig';
 import { useSession } from '@/context/SessionContext';
 import { useAuthGuard } from '@/lib/hooks/useAuthGuard';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // Protect all dashboard routes
-  useAuthGuard();
+export default function DashboardLayout({
+  children,
+}: {
   children: React.ReactNode;
 }) {
+  // Protect all dashboard routes — redirects to /login if not authenticated
+  useAuthGuard();
+
   const { user, switchRole } = useSession();
 
   const handleRoleSwitch = async (newRole: EmployeeRole) => {
