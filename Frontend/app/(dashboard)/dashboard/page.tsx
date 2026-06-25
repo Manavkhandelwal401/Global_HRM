@@ -102,6 +102,62 @@ function writeDemoExpenses(update: Partial<{ requests: ExpenseRequest[]; approva
   } catch { /* ignore */ }
 }
 
+// ─── Demo attendance helpers ──────────────────────────────────────────────────
+const DEMO_EMP_LIST = [
+  { id: 'EMP-004', name: 'John Doe', department: 'Engineering' },
+  { id: 'EMP-005', name: 'Mayank Khandelwal', department: 'Engineering' },
+  { id: 'EMP-006', name: 'Jane Smith', department: 'Human Resources' },
+  { id: 'EMP-007', name: 'Ravi Kumar', department: 'Finance' },
+  { id: 'EMP-008', name: 'Priya Sharma', department: 'Marketing' },
+];
+
+function generateDemoAttendance(filterEmployeeId?: string) {
+  const records: {
+    employeeName: string; employeeId: string; department: string;
+    date: string; checkIn: string | null; checkOut: string | null;
+    workingHours: string; status: string;
+  }[] = [];
+  const today = new Date();
+  const emps = filterEmployeeId
+    ? DEMO_EMP_LIST.filter(e => e.id === filterEmployeeId)
+    : DEMO_EMP_LIST;
+  for (let d = 13; d >= 0; d--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - d);
+    const dow = date.getDay();
+    if (dow === 0 || dow === 6) continue; // skip weekends
+    const dateStr = date.toISOString().split('T')[0];
+    for (const emp of emps) {
+      // Deterministic pseudo-random so data is stable on re-renders
+      const seed = (emp.id.charCodeAt(4) * 13 + date.getDate() * 7 + d) % 100;
+      const absent = seed < 5;
+      const late = !absent && seed < 22;
+      if (absent) {
+        records.push({ employeeName: emp.name, employeeId: emp.id, department: emp.department, date: dateStr, checkIn: null, checkOut: null, workingHours: '-', status: 'Absent' });
+      } else {
+        const inH = late ? 10 : 9;
+        const inM = (seed * 3) % 30;
+        const outH = 17 + (seed % 2);
+        const outM = (seed * 7) % 60;
+        const totalInMins = inH * 60 + inM;
+        const totalOutMins = outH * 60 + outM;
+        const diffMins = totalOutMins - totalInMins;
+        const wH = Math.floor(diffMins / 60);
+        const wM = diffMins % 60;
+        records.push({
+          employeeName: emp.name, employeeId: emp.id, department: emp.department, date: dateStr,
+          checkIn: `${String(inH).padStart(2,'0')}:${String(inM).padStart(2,'0')}`,
+          checkOut: `${String(outH).padStart(2,'0')}:${String(outM).padStart(2,'0')}`,
+          workingHours: `${wH}h ${wM}m`,
+          status: late ? 'Late' : 'Present',
+        });
+      }
+    }
+  }
+  return records;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function DashboardPage() {
   const router = useRouter();
   useAuthGuard();
@@ -223,20 +279,26 @@ export default function DashboardPage() {
   }, [syncDemoData]);
 
   useEffect(() => {
-    const savedTasks = localStorage.getItem('dashboard-tasks');
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
-    } else {
-      const defaultTasks: TaskItem[] = [
-        { id: 'task-1', title: 'Submit Q4 Self-Assessment', status: 'pending', date: 'Due by Dec 30', description: 'Review your achievements for Q4, map them to company objectives, and rate your core performance areas.', completedByIds: [], assignedToId: 'EMP-004', assignedToName: 'John Doe', createdById: 'EMP-001', createdByName: 'Manager User' },
-        { id: 'task-2', title: 'Complete Compliance Training', status: 'pending', date: 'Due by Dec 31', description: 'Ensure mandatory security, code of conduct, and privacy training modules are finished to meet audit checks.', completedByIds: [], assignedToId: 'EMP-004', assignedToName: 'John Doe', createdById: 'EMP-001', createdByName: 'Manager User' },
-        { id: 'task-3', title: 'Update Relocation Form', status: 'pending', date: 'Due by Jan 05', description: 'Submit relocation expense claims and supporting proof files if you relocated in the previous quarter.', completedByIds: [], assignedToId: 'EMP-005', assignedToName: 'Mayank Khandelwal', createdById: 'EMP-001', createdByName: 'Manager User' },
-        { id: 'task-4', title: 'Onboarding Checklist', status: 'completed', date: 'Completed Dec 15', description: 'Initial onboarding checklist steps including IT allocation and desk setup.', completedByIds: ['EMP-004'], assignedToId: 'EMP-004', assignedToName: 'John Doe', createdById: 'EMP-001', createdByName: 'Manager User' },
-      ];
-      setTasks(defaultTasks);
-      localStorage.setItem('dashboard-tasks', JSON.stringify(defaultTasks));
-    }
+    const loadTasks = () => {
+      const savedTasks = localStorage.getItem('dashboard-tasks');
+      if (savedTasks) {
+        try { setTasks(JSON.parse(savedTasks)); } catch { /* ignore */ }
+      } else {
+        const defaultTasks: TaskItem[] = [
+          { id: 'task-1', title: 'Submit Q4 Self-Assessment', status: 'pending', date: 'Due by Dec 30', description: 'Review your achievements for Q4, map them to company objectives, and rate your core performance areas.', completedByIds: [], assignedToId: 'EMP-004', assignedToName: 'John Doe', createdById: 'EMP-001', createdByName: 'Manager User' },
+          { id: 'task-2', title: 'Complete Compliance Training', status: 'pending', date: 'Due by Dec 31', description: 'Ensure mandatory security, code of conduct, and privacy training modules are finished to meet audit checks.', completedByIds: [], assignedToId: 'EMP-004', assignedToName: 'John Doe', createdById: 'EMP-001', createdByName: 'Manager User' },
+          { id: 'task-3', title: 'Update Relocation Form', status: 'pending', date: 'Due by Jan 05', description: 'Submit relocation expense claims and supporting proof files if you relocated in the previous quarter.', completedByIds: [], assignedToId: 'EMP-005', assignedToName: 'Mayank Khandelwal', createdById: 'EMP-001', createdByName: 'Manager User' },
+          { id: 'task-4', title: 'Onboarding Checklist', status: 'completed', date: 'Completed Dec 15', description: 'Initial onboarding checklist steps including IT allocation and desk setup.', completedByIds: ['EMP-004'], assignedToId: 'EMP-004', assignedToName: 'John Doe', createdById: 'EMP-001', createdByName: 'Manager User' },
+        ];
+        setTasks(defaultTasks);
+        localStorage.setItem('dashboard-tasks', JSON.stringify(defaultTasks));
+      }
+    };
+    loadTasks();
     setMounted(true);
+    // Poll localStorage every 30 s for real-time cross-tab task updates
+    const interval = setInterval(loadTasks, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Derive the leave list based on role + mode
@@ -287,14 +349,14 @@ export default function DashboardPage() {
 
   // Filter tasks based on role:
   // - Employees only see tasks assigned to them.
-  // - Management roles (HR, Manager, Admin) see tasks they created/assigned.
+  // - Management (HR, Manager, Admin) sees ALL tasks to monitor/manage the full team.
   const myUserId = user?.id || 'EMP-004';
   const visibleTasks = tasks.filter(t => {
     if (!isManagement) {
-      return t.assignedToId === myUserId || (!t.assignedToId && myUserId === 'EMP-004'); 
+      return t.assignedToId === myUserId || (!t.assignedToId && myUserId === 'EMP-004');
     }
-    // For management, only show tasks they created/assigned
-    return t.createdById === myUserId || (!t.createdById && myUserId === 'EMP-001'); 
+    // Management sees all tasks across all employees
+    return true;
   });
 
   // For employees, pendingTasks lists tasks they need to complete.
@@ -358,16 +420,30 @@ export default function DashboardPage() {
   const displayedActivities = showAllLeaves ? sortedActivities : sortedActivities.slice(0, 3);
 
   // Prepare attendance records for the table
-  const attendanceRecords = (isManagement ? teamAttendanceData?.getTeamAttendance ?? [] : myAttendanceData?.getMyAttendance ?? []).map((rec: any) => ({
-    employeeName: rec.employeeName,
-    employeeId: rec.employeeId,
-    department: rec.department || 'N/A',
-    date: rec.date?.split('T')[0] ?? '',
-    checkIn: rec.clockIn ?? null,
-    checkOut: rec.clockOut ?? null,
-    workingHours: rec.productiveHours ?? '-',
-    status: rec.status ?? '-',
-  }));
+  // In demo mode: generate deterministic seed data; in real mode: use API data
+  const demoAttendanceAll = useDemoMode ? generateDemoAttendance() : [];
+  const demoAttendanceMine = useDemoMode ? generateDemoAttendance(myUserId) : [];
+
+  const attendanceRecords = useDemoMode
+    ? (isManagement ? demoAttendanceAll : demoAttendanceMine)
+    : (isManagement ? teamAttendanceData?.getTeamAttendance ?? [] : myAttendanceData?.getMyAttendance ?? []).map((rec: any) => ({
+        employeeName: rec.employeeName,
+        employeeId: rec.employeeId,
+        department: rec.department || 'N/A',
+        date: rec.date?.split('T')[0] ?? '',
+        checkIn: rec.clockIn ?? null,
+        checkOut: rec.clockOut ?? null,
+        workingHours: rec.productiveHours ?? '-',
+        status: rec.status ?? '-',
+      }));
+
+  // Compute attendance rate from available records
+  const myAttendanceForStat = attendanceRecords.filter((r: any) =>
+    !isManagement || r.employeeId === myUserId
+  );
+  const totalAttDays = myAttendanceForStat.length;
+  const presentAttDays = myAttendanceForStat.filter((r: any) => r.status !== 'Absent').length;
+  const attendancePct = totalAttDays > 0 ? Math.round((presentAttDays / totalAttDays) * 100) : 95;
 
   // ---- Demo mode action handlers ----
   const handleDemoCancel = (requestId: string) => {
@@ -591,14 +667,14 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <StatCard
             title="Attendance"
-            value="95%"
+            value={`${attendancePct}%`}
             icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             }
             color="teal"
-            trend={{ value: 5, isPositive: true }}
+            subtitle={`${presentAttDays}/${totalAttDays} days`}
           />
           <StatCard
             title="Tasks"
@@ -623,15 +699,24 @@ export default function DashboardPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               Recent Activity
             </h2>
-            {sortedActivities.length > 3 && (
+            <div className="flex items-center gap-2">
+              {sortedActivities.length > 3 && (
+                <button
+                  onClick={() => setShowAllLeaves(v => !v)}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 font-medium transition-colors"
+                >
+                  {showAllLeaves ? 'Show less' : `+${sortedActivities.length - 3} more`}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAllLeaves ? 'rotate-180' : ''}`} />
+                </button>
+              )}
               <button
-                onClick={() => setShowAllLeaves(v => !v)}
-                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 font-medium transition-colors"
+                onClick={() => router.push('/leave')}
+                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 font-semibold transition-colors"
               >
-                {showAllLeaves ? 'Show less' : `View all (${sortedActivities.length})`}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAllLeaves ? 'rotate-180' : ''}`} />
+                View All
+                <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
               </button>
-            )}
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -820,6 +905,32 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Team Attendance Table — HR / Admin / Manager only ─────────────── */}
+      {isManagement && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Team Attendance</h2>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Live view of all employees — search, filter, and paginate below</p>
+            </div>
+            <button
+              onClick={() => router.push('/attendance')}
+              className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-semibold transition-colors"
+            >
+              Full Report
+              <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
+            </button>
+          </div>
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-4 shadow-soft">
+            {attendanceRecords.length === 0 ? (
+              <div className="py-8 text-center text-xs text-zinc-400">No attendance records found.</div>
+            ) : (
+              <AttendanceTable data={attendanceRecords} />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="space-y-4">
