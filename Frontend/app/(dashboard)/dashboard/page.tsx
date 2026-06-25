@@ -821,6 +821,14 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Quick Actions */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <ModuleCard
+            title="Track Attendance"
+            description="View your attendance history"
+            icon={
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
