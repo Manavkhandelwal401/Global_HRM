@@ -17,7 +17,7 @@ steps:
       - '--all-tags'
       - 'asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend'
 
-  # Deploy to Cloud Run
+  # Deploy to Cloud Run (us-central1 — mapped to globalhrm.me)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -25,7 +25,7 @@ steps:
       - 'deploy'
       - 'global-hrm-frontend'
       - '--image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest'
-      - '--region=asia-south1'
+      - '--region=us-central1'
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--port=8080'
