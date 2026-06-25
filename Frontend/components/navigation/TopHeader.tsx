@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { type EmployeeRole } from '@/lib/navigation/navigationConfig';
 import { useTheme } from '@/context/ThemeContext';
+import { useSession } from '@/context/SessionContext';
 
 export interface TopHeaderProps {
   user: {
@@ -20,6 +21,7 @@ const roleOptions: EmployeeRole[] = ['Employee', 'Manager', 'HR', 'Admin'];
 export const TopHeader: React.FC<TopHeaderProps> = ({ user, onRoleSwitch }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { logout } = useSession();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const getInitials = (name: string) => {
     return name
@@ -197,6 +199,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user, onRoleSwitch }) => {
                     ))}
                   </div>
                 </div>
+                  <button onClick={logout} className="w-full py-1 text-xs font-semibold text-red-600 hover:bg-red-100 rounded-md mt-2">
+                    Logout
+                  </button>
               </div>
             )}
           </div>

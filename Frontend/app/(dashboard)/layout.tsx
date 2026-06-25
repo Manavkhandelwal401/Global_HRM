@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { type EmployeeRole } from '@/lib/navigation/navigationConfig';
 import { useSession } from '@/context/SessionContext';
+import { useAuthGuard } from '@/lib/hooks/useAuthGuard';
 
-export default function DashboardLayout({
-  children,
-}: {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Protect all dashboard routes
+  useAuthGuard();
   children: React.ReactNode;
 }) {
   const { user, switchRole } = useSession();

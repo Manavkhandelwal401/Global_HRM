@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthGuard } from '@/lib/hooks/useAuthGuard';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { StatCard } from '@/components/shared/StatCard';
 import { ModuleCard } from '@/components/shared/ModuleCard';
@@ -101,6 +102,7 @@ function writeDemoExpenses(update: Partial<{ requests: ExpenseRequest[]; approva
 
 export default function DashboardPage() {
   const router = useRouter();
+  useAuthGuard();
   const { user } = useSession();
   const currentRole = user?.role || 'Employee';
   const isManagement = currentRole === 'Manager' || currentRole === 'HR' || currentRole === 'Admin';
