@@ -94,10 +94,12 @@ export default function AttendancePage() {
   // Helper: today's date string YYYY-MM-DD (local)
   const todayDateStr = new Date().toLocaleDateString("en-CA"); // "2026-06-25"
 
+  const attendanceStorageKey = user?.id ? `demo-attendance-${user.id}` : "demo-attendance-guest";
+
   useEffect(() => {
     if (!useDemoMode) return;
 
-    const saved = typeof window !== "undefined" ? localStorage.getItem("demo-attendance") : null;
+    const saved = typeof window !== "undefined" ? localStorage.getItem(attendanceStorageKey) : null;
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -115,7 +117,7 @@ export default function AttendancePage() {
               parsed.history = [savedToday, ...(parsed.history ?? [])].slice(0, 30);
             }
             parsed.today = null;
-            localStorage.setItem("demo-attendance", JSON.stringify(parsed));
+            localStorage.setItem(attendanceStorageKey, JSON.stringify(parsed));
           }
         }
         setDemoTodayRecord(todayRecord);
@@ -153,8 +155,8 @@ export default function AttendancePage() {
       },
     ];
     setDemoHistory(seededHistory);
-    localStorage.setItem("demo-attendance", JSON.stringify({ today: null, history: seededHistory }));
-  }, [useDemoMode, user?.id, user?.name, todayDateStr]);
+    localStorage.setItem(attendanceStorageKey, JSON.stringify({ today: null, history: seededHistory }));
+  }, [useDemoMode, user?.id, user?.name, todayDateStr, attendanceStorageKey]);
 
   const todayAttendance: AttendanceRecord | null = useDemoMode ? demoTodayRecord ?? null : todayData?.getTodayAttendance;
   const attendanceHistory: AttendanceRecord[] = useDemoMode ? demoHistory : historyData?.getMyAttendance || [];
@@ -177,7 +179,7 @@ export default function AttendancePage() {
       const nextHistory = [record, ...demoHistory].slice(0, 10);
       setDemoTodayRecord(record);
       setDemoHistory(nextHistory);
-      localStorage.setItem("demo-attendance", JSON.stringify({ today: record, history: nextHistory }));
+      localStorage.setItem(attendanceStorageKey, JSON.stringify({ today: record, history: nextHistory }));
       return;
     }
 
@@ -204,7 +206,7 @@ export default function AttendancePage() {
       const nextHistory = [completedRecord, ...demoHistory.filter((entry) => entry.id !== demoTodayRecord.id)].slice(0, 10);
       setDemoTodayRecord(completedRecord);
       setDemoHistory(nextHistory);
-      localStorage.setItem("demo-attendance", JSON.stringify({ today: completedRecord, history: nextHistory }));
+      localStorage.setItem(attendanceStorageKey, JSON.stringify({ today: completedRecord, history: nextHistory }));
       return;
     }
 

@@ -207,25 +207,41 @@ input, textarea, select {
 }
 
 @media print {
-  /* Hide all dashboard/page elements by default */
+  /* Hide headers, bottom nav, copilot, and other non-certificate elements */
+  header, nav, footer, aside, .print-exclude, #copilot-panel, #hr-copilot-button, button {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Reset container layout and heights to collapse layout-space */
+  html, body, main, div[class*="min-h-screen"], div.flex-col {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide other dashboard elements */
   body * {
     visibility: hidden;
   }
-  
-  /* Render only the certificate modal and its content */
+
+  /* Only show the certificate and its children */
   #print-certificate-modal,
   #print-certificate-modal * {
     visibility: visible;
   }
-  
-  /* Reset the modal overlay layout to take full screen with no backdrops */
+
+  /* Position modal cleanly on the page */
   #print-certificate-modal {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    background: none !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: white !important;
     backdrop-filter: none !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -240,19 +256,13 @@ input, textarea, select {
     box-shadow: none !important;
     background: white !important;
     color: black !important;
-    margin: 0 !important;
+    margin: auto !important;
     padding: 20px !important;
     max-width: 100% !important;
     width: 100% !important;
     height: auto !important;
     box-sizing: border-box !important;
     page-break-inside: avoid !important;
-  }
-
-  /* Exclude action buttons from print layout */
-  .print-exclude {
-    display: none !important;
-    visibility: hidden !important;
   }
 
   /* Hide default headers/footers and force landscape */

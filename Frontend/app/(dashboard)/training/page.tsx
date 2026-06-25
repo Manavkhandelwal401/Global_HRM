@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSession } from '@/context/SessionContext';
 
 interface TrainingModule {
   id: string;
@@ -15,6 +16,7 @@ interface TrainingModule {
 }
 
 export default function TrainingPage() {
+  const { user } = useSession();
   const [modules] = useState<TrainingModule[]>([
     {
       id: '1',
@@ -291,7 +293,7 @@ export default function TrainingPage() {
                   This is proudly presented to
                 </p>
                 <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 underline decoration-zinc-300 dark:decoration-zinc-700 decoration-2 underline-offset-8 mb-6">
-                  John Doe
+                  {user?.name || 'Employee'}
                 </h3>
                 
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed mb-6">
