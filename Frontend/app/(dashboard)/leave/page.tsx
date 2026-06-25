@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
@@ -130,8 +130,9 @@ export default function LeavePage() {
   const leaveRequests: LeaveRequest[] = useDemoMode 
     ? demoRequests.filter((r) => r.employeeId === user?.id) 
     : (requestsData?.getMyLeaveRequests || []);
-  const pendingApprovals: LeaveRequest[] = (useDemoMode ? demoApprovals : (approvalsData?.getPendingLeaveApprovals || []))
-    .filter((request: LeaveRequest) => request.employeeId !== user?.id);
+  const pendingApprovals: LeaveRequest[] = useDemoMode
+    ? demoApprovals.filter((r) => r.status === "Pending")
+    : (approvalsData?.getPendingLeaveApprovals || []).filter((request: LeaveRequest) => request.employeeId !== user?.id);
 
   useEffect(() => {
     setMounted(true);
@@ -234,14 +235,16 @@ export default function LeavePage() {
         createdAt: new Date().toISOString(),
       };
       const nextRequests = [request, ...demoRequests];
+      const nextApprovals = [request, ...demoApprovals];
       const nextBalances = demoBalances.map((balance) => 
         balance.leaveType === leaveType 
           ? { ...balance, pending: balance.pending + request.totalDays, available: balance.available - request.totalDays } 
           : balance
       );
       setDemoRequests(nextRequests);
+      setDemoApprovals(nextApprovals);
       setDemoBalances(nextBalances);
-      localStorage.setItem("demo-leaves", JSON.stringify({ balances: nextBalances, requests: nextRequests, approvals: demoApprovals }));
+      localStorage.setItem("demo-leaves", JSON.stringify({ balances: nextBalances, requests: nextRequests, approvals: nextApprovals }));
       if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
       setIsRequestModalOpen(false);
       resetForm();
@@ -340,14 +343,16 @@ export default function LeavePage() {
           ? { ...r, status: "Rejected" as const, approvalComments: "Cancelled by employee" } 
           : r
       );
+      const nextApprovals = demoApprovals.filter((r) => r.id !== requestId);
       const nextBalances = demoBalances.map((balance) => 
         balance.leaveType === requestToCancel.leaveType 
           ? { ...balance, pending: Math.max(0, balance.pending - requestToCancel.totalDays), available: balance.available + requestToCancel.totalDays } 
           : balance
       );
       setDemoRequests(nextRequests);
+      setDemoApprovals(nextApprovals);
       setDemoBalances(nextBalances);
-      localStorage.setItem("demo-leaves", JSON.stringify({ balances: nextBalances, requests: nextRequests, approvals: demoApprovals }));
+      localStorage.setItem("demo-leaves", JSON.stringify({ balances: nextBalances, requests: nextRequests, approvals: nextApprovals }));
       if (typeof window !== "undefined") window.dispatchEvent(new Event("demo-leaves-updated"));
       return;
     }

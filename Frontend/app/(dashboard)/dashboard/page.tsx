@@ -136,8 +136,8 @@ export default function DashboardPage() {
   const allLeaveRequests: LeaveRequest[] = useDemoMode
     ? isManagement
       ? [
-          ...demoApprovals.filter(r => r.employeeId !== user?.id),
-          ...demoRequests.filter(r => r.employeeId === user?.id)
+          ...demoApprovals,
+          ...demoRequests.filter(r => r.employeeId === user?.id && !demoApprovals.some(a => a.id === r.id))
         ]
       : demoRequests.filter(r => r.employeeId === user?.id)
     : isManagement
@@ -340,6 +340,7 @@ export default function DashboardPage() {
               displayedLeaves.map((req) => {
                 const status = normalizeStatus(req.status, req.approvalComments);
                 const isPending = req.status.toLowerCase() === 'pending';
+                const isPersonal = useDemoMode ? !isManagement : req.employeeId === user?.id;
                 return (
                   <div
                     key={req.id}
@@ -351,7 +352,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 truncate">
                           {req.leaveType} Leave
                         </p>
-                        {req.employeeId !== user?.id && (
+                        {!isPersonal && (
                           <p className="text-xs text-orange-500 font-medium truncate">{req.employeeName}</p>
                         )}
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
@@ -367,7 +368,7 @@ export default function DashboardPage() {
                     {/* Action buttons — only for pending */}
                     {isPending && (
                       <div className="flex gap-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
-                        {req.employeeId === user?.id ? (
+                        {isPersonal ? (
                           <button
                             onClick={() => handleCancel(req.id)}
                             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-50 hover:bg-zinc-100 text-zinc-600 border border-zinc-200 dark:bg-zinc-850 dark:border-zinc-700 dark:text-zinc-300 transition-colors"
