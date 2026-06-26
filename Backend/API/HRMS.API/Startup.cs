@@ -71,12 +71,16 @@ namespace HRMS.API
                         {
                             cmd.CommandText = @"
                                 -- Upsert Admin, HR, Manager with full auth data (always overwrite so they can always log in)
-                                INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"")
+                                INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"")
                                 VALUES 
-                                ('emp-admin-001', 'Mayank Khandelwal', 'mayank@workflowglobal.com', 'System Administrator', 'IT', 0, '2020-01-01 00:00:00+00', 0, 0, 'v9a3tFBDqT0rQA9JwmZChOrETMYnobmNRr4RuMDEpo0=', 'Registered', 'Used', 'REG-MAYANK-123', '2028-01-01 00:00:00+00', NOW()),
-                                ('emp-hr-001', 'Darsh Khandelwal', 'darsh@workflowglobal.com', 'HR Manager', 'Human Resources', 1, '2020-03-15 00:00:00+00', 0, 0, 'nZm+XUELmxSPQW8EPkOlv0hYzpirvXcJUiZuOv5txRc=', 'Registered', 'Used', 'REG-DARSH-123', '2028-01-01 00:00:00+00', NOW()),
-                                ('emp-mgr-001', 'Parul Goyal', 'parul@workflowglobal.com', 'Engineering Manager', 'Engineering', 2, '2021-06-01 00:00:00+00', 0, 0, 'YkeL0AEnYhr9Q0T6gPc29T2PClGjI10U3q9EHzkS5Ng=', 'Registered', 'Used', 'REG-PARUL-123', '2028-01-01 00:00:00+00', NOW())
+                                ('emp-admin-001', 'Mayank Khandelwal', 'mayank@workflowglobal.com', 'System Administrator', 'IT', 0, '2020-01-01 00:00:00+00', 0, 0, 'v9a3tFBDqT0rQA9JwmZChOrETMYnobmNRr4RuMDEpo0=', 'Registered', 'Used', 'REG-MAYANK-123', '2028-01-01 00:00:00+00', NOW(), 'Employee'),
+                                ('emp-hr-001', 'Darsh Khandelwal', 'darsh@workflowglobal.com', 'HR Manager', 'Human Resources', 1, '2020-03-15 00:00:00+00', 0, 0, 'nZm+XUELmxSPQW8EPkOlv0hYzpirvXcJUiZuOv5txRc=', 'Registered', 'Used', 'REG-DARSH-123', '2028-01-01 00:00:00+00', NOW(), 'Employee'),
+                                ('emp-mgr-001', 'Parul Goyal', 'parul@workflowglobal.com', 'Engineering Manager', 'Engineering', 2, '2021-06-01 00:00:00+00', 0, 0, 'YkeL0AEnYhr9Q0T6gPc29T2PClGjI10U3q9EHzkS5Ng=', 'Registered', 'Used', 'REG-PARUL-123', '2028-01-01 00:00:00+00', NOW(), 'Employee')
                                 ON CONFLICT (""Id"") DO UPDATE SET 
+                                    ""Name"" = EXCLUDED.""Name"",
+                                    ""Email"" = EXCLUDED.""Email"",
+                                    ""Designation"" = EXCLUDED.""Designation"",
+                                    ""Department"" = EXCLUDED.""Department"",
                                     ""PasswordHash"" = EXCLUDED.""PasswordHash"",
                                     ""RegistrationStatus"" = 'Registered',
                                     ""ActivationCodeStatus"" = 'Used',
@@ -85,10 +89,10 @@ namespace HRMS.API
                                     ""Role"" = EXCLUDED.""Role"";
 
                                 -- Upsert pending employees (preserve PasswordHash/RegistrationStatus if already self-registered)
-                                INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""ManagerId"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"")
+                                INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""ManagerId"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"")
                                 VALUES 
-                                ('emp-001', 'Varshita Sharma', 'varshita@workflowglobal.com', 'Senior Software Engineer', 'Engineering', 'emp-mgr-001', 3, '2022-01-10 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-VARSHITA-987', '2028-01-01 00:00:00+00', NOW()),
-                                ('emp-002', 'Bhavishya Khandelwal', 'bhavishya@workflowglobal.com', 'Junior Developer', 'Engineering', 'emp-mgr-001', 3, '2023-05-01 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-BHAVISHYA-654', '2028-01-01 00:00:00+00', NOW())
+                                ('emp-001', 'Varshita Sharma', 'varshita@workflowglobal.com', 'Senior Software Engineer', 'Engineering', 'emp-mgr-001', 3, '2022-01-10 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-VARSHITA-987', '2028-01-01 00:00:00+00', NOW(), 'Employee'),
+                                ('emp-002', 'Bhavishya Khandelwal', 'bhavishya@workflowglobal.com', 'Junior Developer', 'Engineering', 'emp-mgr-001', 3, '2023-05-01 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-BHAVISHYA-654', '2028-01-01 00:00:00+00', NOW(), 'Employee')
                                 ON CONFLICT (""Id"") DO UPDATE SET
                                     -- Only update activation code; preserve RegistrationStatus/PasswordHash if already registered
                                     ""ActivationCode"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN EXCLUDED.""ActivationCode"" ELSE ""Employees"".""ActivationCode"" END,
