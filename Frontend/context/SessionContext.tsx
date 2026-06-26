@@ -39,6 +39,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 							name: originalUser.name,
 							email: originalUser.email,
 							role: originalUser.role || "Employee",
+							isDemo: originalUser.isDemo ?? true,
 						};
 						setUser(restoredUser);
 						dispatch(setCredentials({ user: restoredUser }));
@@ -57,6 +58,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 							name: payload.unique_name || payload.name || "John Doe",
 							email: payload.email || "john.doe@workflow.com",
 							role: payload.role || "Employee",
+							isDemo: payload.isDemo === "true" || payload.isDemo === true,
 						};
 						setUser(restoredUser);
 						dispatch(setCredentials({ user: restoredUser }));
@@ -73,7 +75,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
 	const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
 		const res = await loginWithPassword(email, password);
 		const nextUser: AuthUser | null =
-			res.user ? { id: res.user.id, name: res.user.name, email: res.user.email, role: res.user.role } : null;
+			res.user ? { 
+				id: res.user.id, 
+				name: res.user.name, 
+				email: res.user.email, 
+				role: res.user.role,
+				isDemo: res.user.isDemo
+			} : null;
 		setUser(nextUser);
 		dispatch(setCredentials({ user: nextUser }));
 		if (nextUser) {
@@ -92,8 +100,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
 	const switchRole = useCallback(async (newRole: string) => {
 		if (!user?.id) return;
-		
-		// Demo auth bypass removed – real role switching via GraphQL mutation
+		if (user.isDemo === false) {
+			console.warn("Switch role is not allowed for real employees");
+			return;
+		}
 		
 		try {
 			const { data } = await switchDemoRoleMutation({
@@ -109,9 +119,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
 					email: data.switchDemoRole.email,
 					name: `${data.switchDemoRole.firstName} ${data.switchDemoRole.lastName}`,
 					role: data.switchDemoRole.role || "Employee",
+					isDemo: true
 				};
 				setUser(updatedUser);
 				dispatch(setCredentials({ user: updatedUser }));
+				localStorage.setItem("original-user", JSON.stringify(updatedUser));
 			}
 		} catch (error) {
 			console.error('Failed to switch role:', error);

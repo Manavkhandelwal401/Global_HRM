@@ -21,6 +21,7 @@ namespace EmployeeFeature.Domain
         public string ActivationCodeStatus { get; set; } = "Unused";
         public DateTime? ActivationCodeExpiry { get; set; }
         public DateTime? RegistrationTimestamp { get; set; }
+        public bool IsDemo { get; set; } = false;
     }
 }
 

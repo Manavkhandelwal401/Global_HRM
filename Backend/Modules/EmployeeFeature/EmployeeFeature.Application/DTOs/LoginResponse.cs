@@ -19,6 +19,7 @@ namespace EmployeeFeature.Application.DTOs
         public string? Department { get; set; }
         public EmployeeRole Role { get; set; }
         public Country Country { get; set; }
+        public bool IsDemo { get; set; }
     }
 }
 

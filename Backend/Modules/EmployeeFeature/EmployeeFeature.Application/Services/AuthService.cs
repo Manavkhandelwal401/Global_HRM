@@ -93,7 +93,8 @@ namespace EmployeeFeature.Application.Services
                     Designation = employee.Designation,
                     Department = employee.Department,
                     Role = employee.Role,
-                    Country = employee.Country
+                    Country = employee.Country,
+                    IsDemo = employee.IsDemo
                 }
             };
         }
@@ -111,7 +112,8 @@ namespace EmployeeFeature.Application.Services
                 Designation = employee.Designation,
                 Department = employee.Department,
                 Role = employee.Role,
-                Country = employee.Country
+                Country = employee.Country,
+                IsDemo = employee.IsDemo
             };
         }
 
@@ -124,6 +126,15 @@ namespace EmployeeFeature.Application.Services
                 {
                     Success = false,
                     Message = "User not found"
+                };
+            }
+
+            if (!employee.IsDemo)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Role switching is only permitted for Demo users."
                 };
             }
 
@@ -143,7 +154,8 @@ namespace EmployeeFeature.Application.Services
                     Designation = employee.Designation,
                     Department = employee.Department,
                     Role = employee.Role,
-                    Country = employee.Country
+                    Country = employee.Country,
+                    IsDemo = employee.IsDemo
                 }
             };
         }

@@ -21,7 +21,7 @@ const roleOptions: EmployeeRole[] = ['Employee', 'Manager', 'HR', 'Admin'];
 export const TopHeader: React.FC<TopHeaderProps> = ({ user, onRoleSwitch }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { logout } = useSession();
+  const { logout, user: sessionUser } = useSession();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const getInitials = (name: string) => {
     return name
@@ -139,44 +139,48 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ user, onRoleSwitch }) => {
             {/* Dropdown Menu */}
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-56 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-md z-50">
-                <div className="border-b border-zinc-200 dark:border-zinc-800 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    Switch Demo Role
-                  </p>
-                  <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mt-1">
-                    Current: {user.role}
-                  </p>
-                </div>
-                <div className="p-1">
-                  {roleOptions.map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => handleRoleChange(role)}
-                      className={`w-full rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                        user.role === role
-                          ? 'bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-zinc-50'
-                          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{role}</span>
-                        {user.role === role && (
-                          <svg
-                            className="h-3.5 w-3.5"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                {sessionUser?.isDemo !== false && (
+                  <>
+                    <div className="border-b border-zinc-200 dark:border-zinc-800 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                        Switch Demo Role
+                      </p>
+                      <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300 mt-1">
+                        Current: {user.role}
+                      </p>
+                    </div>
+                    <div className="p-1 border-b border-zinc-200 dark:border-zinc-800">
+                      {roleOptions.map((role) => (
+                        <button
+                          key={role}
+                          onClick={() => handleRoleChange(role)}
+                          className={`w-full rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                            user.role === role
+                              ? 'bg-zinc-100 text-zinc-900 font-semibold dark:bg-zinc-800 dark:text-zinc-50'
+                              : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span>{role}</span>
+                            {user.role === role && (
+                              <svg
+                                className="h-3.5 w-3.5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {/* Theme Selector */}
                 <div className="border-t border-zinc-200 dark:border-zinc-800 p-3 bg-zinc-50/50 dark:bg-zinc-900/30 rounded-b-xl">

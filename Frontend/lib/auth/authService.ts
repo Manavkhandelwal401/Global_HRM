@@ -10,7 +10,7 @@ const LoginResponseSchema = z.object({
 			email: z.string().email().optional(),
 			name: z.string().optional(),
 			role: z.string().optional(),
-			// extend as needed
+			isDemo: z.boolean().optional(),
 		})
 		.optional(),
 });

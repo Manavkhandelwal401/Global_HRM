@@ -25,6 +25,7 @@ namespace EmployeeFeature.Infrastructure.Data
                 entity.Property(e => e.ActivationCodeStatus).HasMaxLength(50).HasDefaultValue("Unused");
                 entity.Property(e => e.ActivationCodeExpiry);
                 entity.Property(e => e.RegistrationTimestamp);
+                entity.Property(e => e.IsDemo).HasDefaultValue(false);
                 
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.HasIndex(e => e.ManagerId);

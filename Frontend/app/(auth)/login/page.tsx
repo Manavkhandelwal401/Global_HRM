@@ -3,7 +3,7 @@
 import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "../../../context/SessionContext";
-import { Building2, Lock, Mail } from "lucide-react";
+import { Building2, Lock, Mail, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 
 export default function LoginPage() {
 	return (
@@ -17,6 +17,9 @@ function LoginForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { login } = useSession();
+	const [activeTab, setActiveTab] = useState<'demo' | 'corporate'>('demo');
+	
+	// Form inputs
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
@@ -32,11 +35,11 @@ function LoginForm() {
 	const [signupError, setSignupError] = useState<string | null>(null);
 	const [signupSuccess, setSignupSuccess] = useState<string | null>(null);
 
-	const demoAccounts = [
-		{ label: "Admin (Mayank)", email: "mayank@workflowglobal.com", pass: "AdminPassword123" },
-		{ label: "HR (Darsh)", email: "darsh@workflowglobal.com", pass: "HRPassword123" },
-		{ label: "Manager (Parul)", email: "parul@workflowglobal.com", pass: "ManagerPassword123" },
-		{ label: "Unregistered (Varshita)", code: "REG-VARSHITA-987", empId: "emp-001", email: "varshita@workflowglobal.com" }
+	const demoUsers = [
+		{ name: "David Anderson", role: "Admin", email: "david@democompany.com", pass: "DemoPassword123" },
+		{ name: "Sarah Wilson", role: "HR", email: "sarah@democompany.com", pass: "DemoPassword123" },
+		{ name: "Michael Brown", role: "Manager", email: "michael@democompany.com", pass: "DemoPassword123" },
+		{ name: "John Doe", role: "Employee", email: "john@democompany.com", pass: "DemoPassword123" }
 	];
 
 	async function onSubmit(e: FormEvent) {
@@ -45,10 +48,24 @@ function LoginForm() {
 		setLoading(true);
 		try {
 			await login({ email, password });
-			const next = searchParams.get("next") || "/";
+			const next = searchParams.get("next") || "/dashboard";
 			router.replace(next);
 		} catch (err: any) {
 			setError(err?.message || "Login failed");
+		} finally {
+			setLoading(false);
+		}
+	}
+
+	async function handleQuickDemoLogin(demoUser: typeof demoUsers[0]) {
+		setError(null);
+		setLoading(true);
+		try {
+			await login({ email: demoUser.email, password: demoUser.pass });
+			const next = searchParams.get("next") || "/dashboard";
+			router.replace(next);
+		} catch (err: any) {
+			setError(err?.message || "Demo login failed");
 		} finally {
 			setLoading(false);
 		}
@@ -85,8 +102,9 @@ function LoginForm() {
 				throw new Error(errorData?.message || `Signup failed with status ${res.status}`);
 			}
 
-			setSignupSuccess("Account registered successfully! You can now sign in.");
+			setSignupSuccess("Account registered successfully! Please sign in using the Corporate Portal.");
 			setIsSignUp(false);
+			setActiveTab('corporate');
 			setEmail(signupEmail);
 			setPassword(signupPassword);
 		} catch (err: any) {
@@ -96,58 +114,57 @@ function LoginForm() {
 		}
 	}
 
-	function handleDemoClick(acc: any) {
-		if (acc.pass) {
-			setIsSignUp(false);
-			setEmail(acc.email);
-			setPassword(acc.pass);
-			setError(null);
-		} else {
-			setIsSignUp(true);
-			setEmpId(acc.empId);
-			setSignupEmail(acc.email);
-			setCode(acc.code);
-			setSignupError(null);
-		}
-	}
-
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4">
+		<div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-4 transition-colors duration-300">
 			<div className="w-full max-w-md">
 				{/* Brand Header */}
-				<div className="mb-8 text-center">
-					<div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-zinc-900 dark:bg-zinc-50 mb-4">
+				<div className="mb-6 text-center">
+					<div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-zinc-900 dark:bg-zinc-50 mb-4 shadow-lg shadow-zinc-900/10 dark:shadow-white/5">
 						<Building2 className="w-6 h-6 text-white dark:text-zinc-900" />
 					</div>
-					<h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
-						{isSignUp ? "Create your account" : "Welcome back"}
+					<h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+						WorkFlow HRMS
 					</h1>
-					<p className="text-sm text-zinc-600 dark:text-zinc-400">
-						{isSignUp ? (
-							<>
-								Already registered?{" "}
-								<button 
-									type="button"
-									onClick={() => setIsSignUp(false)}
-									className="text-zinc-900 dark:text-zinc-50 font-semibold underline hover:text-zinc-700"
-								>
-									Sign in
-								</button>
-							</>
-						) : (
-							<>
-								Sign in to your account or{" "}
-								<button 
-									type="button"
-									onClick={() => setIsSignUp(true)}
-									className="text-zinc-900 dark:text-zinc-50 font-semibold underline hover:text-zinc-700"
-								>
-									Register profile
-								</button>
-							</>
-						)}
+					<p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mt-1">
+						Global Human Resource Management
 					</p>
 				</div>
+
+				{/* Custom Mode Tabs */}
+				{!isSignUp && (
+					<div className="flex gap-1.5 bg-zinc-200/60 dark:bg-zinc-900/80 p-1 rounded-xl mb-6 border border-zinc-200 dark:border-zinc-800">
+						<button
+							type="button"
+							onClick={() => {
+								setActiveTab('demo');
+								setError(null);
+							}}
+							className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
+								activeTab === 'demo'
+									? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-800/50 border'
+									: 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+							}`}
+						>
+							<Sparkles className="w-3.5 h-3.5" />
+							Demo Environment
+						</button>
+						<button
+							type="button"
+							onClick={() => {
+								setActiveTab('corporate');
+								setError(null);
+							}}
+							className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
+								activeTab === 'corporate'
+									? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm border-zinc-200/50 dark:border-zinc-800/50 border'
+									: 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+							}`}
+						>
+							<UserCheck className="w-3.5 h-3.5" />
+							Corporate Portal
+						</button>
+					</div>
+				)}
 
 				{signupSuccess && (
 					<div className="mb-6 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-green-800 dark:text-green-300 p-4 shadow-sm text-sm">
@@ -156,210 +173,265 @@ function LoginForm() {
 				)}
 
 				{isSignUp ? (
-					/* Sign Up Card */
-					<form 
-						onSubmit={onSignupSubmit} 
-						className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 space-y-4"
-					>
-						<div className="space-y-2">
-							<label htmlFor="empId" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
-								Employee ID
-							</label>
-							<input
-								id="empId"
-								type="text"
-								value={empId}
-								onChange={(e) => setEmpId(e.target.value)}
-								required
-								className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
-								placeholder="emp-001"
-							/>
+					/* Sign Up Card (Corporate Portal Exclusive) */
+					<div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
+						<div className="mb-4">
+							<h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+								Register Account
+							</h2>
+							<p className="text-xs text-zinc-500 mt-1">
+								Only pre-created company emails can activate accounts.
+							</p>
 						</div>
 
-						<div className="space-y-2">
-							<label htmlFor="signupEmail" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
-								Company Email
-							</label>
-							<input
-								id="signupEmail"
-								type="email"
-								value={signupEmail}
-								onChange={(e) => setSignupEmail(e.target.value)}
-								required
-								className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
-								placeholder="you@workflowglobal.com"
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<label htmlFor="code" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
-								Registration Code
-							</label>
-							<input
-								id="code"
-								type="text"
-								value={code}
-								onChange={(e) => setCode(e.target.value)}
-								required
-								className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
-								placeholder="REG-XXXXXX-XXX"
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<label htmlFor="signupPassword" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
-								Choose Password
-							</label>
-							<input
-								id="signupPassword"
-								type="password"
-								value={signupPassword}
-								onChange={(e) => setSignupPassword(e.target.value)}
-								required
-								className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
-								placeholder="••••••••"
-							/>
-						</div>
-
-						<div className="space-y-2">
-							<label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
-								Confirm Password
-							</label>
-							<input
-								id="confirmPassword"
-								type="password"
-								value={confirmPassword}
-								onChange={(e) => setConfirmPassword(e.target.value)}
-								required
-								className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
-								placeholder="••••••••"
-							/>
-						</div>
-
-						{signupError && (
-							<div className="rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 p-3">
-								<p className="text-sm text-red-700 dark:text-red-400">{signupError}</p>
-							</div>
-						)}
-
-						<button
-							type="submit"
-							disabled={loading}
-							className="w-full h-10 rounded-md bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 transition-all shadow-sm"
-						>
-							{loading ? "Registering..." : "Complete Registration"}
-						</button>
-					</form>
-				) : (
-					/* Sign In Card */
-					<form 
-						onSubmit={onSubmit} 
-						className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6 space-y-5"
-					>
-						{/* Email Field */}
-						<div className="space-y-2">
-							<label 
-								htmlFor="email" 
-								className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
-							>
-								Email address
-							</label>
-							<div className="relative">
-								<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-									<Mail className="h-4 w-4 text-zinc-400" />
-								</div>
+						<form onSubmit={onSignupSubmit} className="space-y-4">
+							<div className="space-y-1.5">
+								<label htmlFor="empId" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Employee ID
+								</label>
 								<input
-									id="email"
-									type="email"
-									value={email}
-									onChange={(e) => setEmail(e.target.value)}
+									id="empId"
+									type="text"
+									value={empId}
+									onChange={(e) => setEmpId(e.target.value)}
 									required
-									className="w-full h-10 pl-10 pr-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 focus:border-transparent transition-all"
-									placeholder="you@company.com"
+									className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 text-sm"
+									placeholder="e.g. emp-001"
 								/>
 							</div>
-						</div>
 
-						{/* Password Field */}
-						<div className="space-y-2">
-							<label 
-								htmlFor="password" 
-								className="block text-sm font-medium text-zinc-900 dark:text-zinc-50"
-							>
-								Password
-							</label>
-							<div className="relative">
-								<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-									<Lock className="h-4 w-4 text-zinc-400" />
-								</div>
+							<div className="space-y-1.5">
+								<label htmlFor="signupEmail" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Official Company Email
+								</label>
 								<input
-									id="password"
-									type="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
+									id="signupEmail"
+									type="email"
+									value={signupEmail}
+									onChange={(e) => setSignupEmail(e.target.value)}
 									required
-									className="w-full h-10 pl-10 pr-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 focus:border-transparent transition-all"
+									className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 text-sm"
+									placeholder="e.g. varshita@workflowglobal.com"
+								/>
+							</div>
+
+							<div className="space-y-1.5">
+								<label htmlFor="code" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Activation Code
+								</label>
+								<input
+									id="code"
+									type="text"
+									value={code}
+									onChange={(e) => setCode(e.target.value)}
+									required
+									className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 text-sm"
+									placeholder="REG-XXXXXX-XXX"
+								/>
+							</div>
+
+							<div className="space-y-1.5">
+								<label htmlFor="signupPassword" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Choose Password
+								</label>
+								<input
+									id="signupPassword"
+									type="password"
+									value={signupPassword}
+									onChange={(e) => setSignupPassword(e.target.value)}
+									required
+									className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 text-sm"
 									placeholder="••••••••"
 								/>
 							</div>
+
+							<div className="space-y-1.5">
+								<label htmlFor="confirmPassword" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Confirm Password
+								</label>
+								<input
+									id="confirmPassword"
+									type="password"
+									value={confirmPassword}
+									onChange={(e) => setConfirmPassword(e.target.value)}
+									required
+									className="w-full h-10 px-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 text-sm"
+									placeholder="••••••••"
+								/>
+							</div>
+
+							{signupError && (
+								<div className="rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 p-3">
+									<p className="text-xs text-red-700 dark:text-red-400">{signupError}</p>
+								</div>
+							)}
+
+							<button
+								type="submit"
+								disabled={loading}
+								className="w-full h-10 rounded-md bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 transition-all shadow-sm text-sm"
+							>
+								{loading ? "Registering Account..." : "Register Now"}
+							</button>
+
+							<div className="text-center pt-2">
+								<button 
+									type="button"
+									onClick={() => setIsSignUp(false)}
+									className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 underline"
+								>
+									Back to Corporate Login
+								</button>
+							</div>
+						</form>
+					</div>
+				) : activeTab === 'demo' ? (
+					/* Demo Environment Card */
+					<div className="space-y-4">
+						<div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-center">
+							<p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+								💡 <strong>Demo Evaluation Mode:</strong> Log in as fictional characters sharing an interconnected database. Role switching is fully enabled in this mode.
+							</p>
 						</div>
 
-						{/* Error Message */}
+						<div className="grid grid-cols-2 gap-3">
+							{demoUsers.map((user) => (
+								<button
+									key={user.email}
+									type="button"
+									onClick={() => handleQuickDemoLogin(user)}
+									disabled={loading}
+									className="bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-left transition-all duration-200 shadow-sm hover:shadow-md flex flex-col justify-between h-28 group relative overflow-hidden"
+								>
+									<span className="absolute top-0 right-0 w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-bl-full -mr-3 -mt-3 group-hover:scale-110 transition-transform duration-200" />
+									<div className="relative z-10">
+										<p className="text-xs font-bold text-zinc-900 dark:text-zinc-50 truncate">
+											{user.name}
+										</p>
+										<p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mt-0.5">
+											{user.role}
+										</p>
+									</div>
+									<div className="relative z-10 mt-auto flex items-center justify-between w-full">
+										<span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[80%]">
+											{user.email}
+										</span>
+										<span className="text-zinc-400 dark:text-zinc-500 font-bold group-hover:translate-x-1 transition-transform">
+											→
+										</span>
+									</div>
+								</button>
+							))}
+						</div>
+
 						{error && (
 							<div className="rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 p-3">
 								<p className="text-sm text-red-700 dark:text-red-400">{error}</p>
 							</div>
 						)}
+					</div>
+				) : (
+					/* Corporate Portal Form */
+					<div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-6">
+						<div className="mb-4">
+							<h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
+								Corporate Sign In
+							</h2>
+							<p className="text-xs text-zinc-500 mt-1">
+								Role switching is disabled for real corporate employees.
+							</p>
+						</div>
 
-						{/* Submit Button */}
-						<button
-							type="submit"
-							disabled={loading}
-							className="w-full h-10 rounded-md bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-						>
-							{loading ? (
-								<span className="inline-flex items-center gap-2">
-									<svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-										<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-										<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-									</svg>
-									Signing in...
-								</span>
-							) : (
-								"Sign in"
+						<form onSubmit={onSubmit} className="space-y-4">
+							<div className="space-y-1.5">
+								<label htmlFor="email" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Corporate Email
+								</label>
+								<div className="relative">
+									<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+										<Mail className="h-4 w-4 text-zinc-400" />
+									</div>
+									<input
+										id="email"
+										type="email"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										required
+										className="w-full h-10 pl-10 pr-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
+										placeholder="you@workflowglobal.com"
+									/>
+								</div>
+							</div>
+
+							<div className="space-y-1.5">
+								<label htmlFor="password" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+									Password
+								</label>
+								<div className="relative">
+									<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+										<Lock className="h-4 w-4 text-zinc-400" />
+									</div>
+									<input
+										id="password"
+										type="password"
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+										required
+										className="w-full h-10 pl-10 pr-3 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-300"
+										placeholder="••••••••"
+									/>
+								</div>
+							</div>
+
+							{error && (
+								<div className="rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 p-3">
+									<p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+								</div>
 							)}
-						</button>
-					</form>
+
+							<button
+								type="submit"
+								disabled={loading}
+								className="w-full h-10 rounded-md bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:opacity-50 transition-all shadow-sm text-sm"
+							>
+								{loading ? "Signing in..." : "Sign In"}
+							</button>
+
+							<div className="flex justify-between items-center pt-2">
+								<button 
+									type="button"
+									onClick={() => {
+										setIsSignUp(true);
+										setEmpId("");
+										setSignupEmail("");
+										setCode("");
+										setSignupPassword("");
+										setConfirmPassword("");
+										setSignupError(null);
+									}}
+									className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 underline"
+								>
+									Register profile
+								</button>
+								<button 
+									type="button"
+									onClick={() => alert("Please contact IT support or HR to recover your password.")}
+									className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 underline"
+								>
+									Forgot Password?
+								</button>
+							</div>
+						</form>
+					</div>
 				)}
 
-				{/* Quick Login Section */}
-				<div className="mt-6 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 shadow-sm space-y-3">
-					<h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider text-center">
-						Auto-fill Credentials / Codes
-					</h3>
-					<div className="grid grid-cols-2 gap-2">
-						{demoAccounts.map((acc) => (
-							<button
-								key={acc.label}
-								type="button"
-								onClick={() => handleDemoClick(acc)}
-								className="py-1.5 px-2 text-[11px] font-medium border border-zinc-100 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors text-center"
-							>
-								{acc.label}
-							</button>
-						))}
-					</div>
-				</div>
-
 				{/* Footer */}
-				<div className="mt-6 text-center">
-					<p className="text-xs text-zinc-500 dark:text-zinc-500">
-						By signing in, you agree to our Terms of Service and Privacy Policy
+				<div className="mt-8 text-center">
+					<p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+						Protected Environment. Unauthorized access is strictly prohibited.
 					</p>
 				</div>
 			</div>
 		</div>
 	);
 }
-
-

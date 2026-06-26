@@ -41,80 +41,132 @@ namespace HRMS.API
 
             app.UseStaticFiles();
 
-            _ = Task.Run(() =>
+            _ = Task.Run(async () =>
             {
-                try
+                int maxRetries = 5;
+                int delaySeconds = 3;
+                for (int i = 1; i <= maxRetries; i++)
                 {
-                    using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                    try
                     {
-                        var context = serviceScope.ServiceProvider.GetRequiredService<HRMS.Core.Postgres.Data.PostgresDbContext>();
-                        context.Database.EnsureCreated();
-
-                        // Run ALTER TABLE to ensure registration columns exist in the DB
-                        context.Database.OpenConnection();
-                        // Step 1: Add registration columns if they don't exist
-                        using (var cmd = context.Database.GetDbConnection().CreateCommand())
+                        using (var serviceScope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
                         {
-                            cmd.CommandText = @"
-                                ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""PasswordHash"" character varying(500);
-                                ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""ActivationCode"" character varying(100);
-                                ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""RegistrationStatus"" character varying(50);
-                                ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""ActivationCodeStatus"" character varying(50);
-                                ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""ActivationCodeExpiry"" timestamp with time zone;
-                                ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""RegistrationTimestamp"" timestamp with time zone;
-                            ";
-                            cmd.ExecuteNonQuery();
+                            var context = serviceScope.ServiceProvider.GetRequiredService<HRMS.Core.Postgres.Data.PostgresDbContext>();
+                            context.Database.EnsureCreated();
+
+                            // Run ALTER TABLE to ensure registration columns exist in the DB
+                            context.Database.OpenConnection();
+                            // Step 1: Add registration columns if they don't exist
+                            using (var cmd = context.Database.GetDbConnection().CreateCommand())
+                            {
+                                cmd.CommandText = @"
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""PasswordHash"" character varying(500);
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""ActivationCode"" character varying(100);
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""RegistrationStatus"" character varying(50);
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""ActivationCodeStatus"" character varying(50);
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""ActivationCodeExpiry"" timestamp with time zone;
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""RegistrationTimestamp"" timestamp with time zone;
+                                    ALTER TABLE ""Employees"" ADD COLUMN IF NOT EXISTS ""IsDemo"" boolean NOT NULL DEFAULT false;
+                                ";
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // Step 2: Upsert seed employees with correct auth data
+                            using (var cmd = context.Database.GetDbConnection().CreateCommand())
+                            {
+                                cmd.CommandText = @"
+                                    -- Upsert Fictional Demo Users (IsDemo = true)
+                                    INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"", ""IsDemo"")
+                                    VALUES 
+                                    ('demo-admin-001', 'David Anderson', 'david@democompany.com', 'System Administrator', 'IT', 0, '2020-01-01 00:00:00+00', 0, 0, '61+7Gka+ev61J4MtptZ4qPzEVDZ6tGpoai4KQEcXgPU=', 'Registered', 'Used', 'REG-DAVID-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', true),
+                                    ('demo-hr-001', 'Sarah Wilson', 'sarah@democompany.com', 'HR Manager', 'Human Resources', 1, '2020-03-15 00:00:00+00', 0, 0, '61+7Gka+ev61J4MtptZ4qPzEVDZ6tGpoai4KQEcXgPU=', 'Registered', 'Used', 'REG-SARAH-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', true),
+                                    ('demo-mgr-001', 'Michael Brown', 'michael@democompany.com', 'Engineering Manager', 'Engineering', 2, '2021-06-01 00:00:00+00', 0, 0, '61+7Gka+ev61J4MtptZ4qPzEVDZ6tGpoai4KQEcXgPU=', 'Registered', 'Used', 'REG-MICHAEL-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', true),
+                                    ('demo-emp-001', 'John Doe', 'john@democompany.com', 'Software Engineer', 'Engineering', 3, '2022-01-10 00:00:00+00', 0, 0, '61+7Gka+ev61J4MtptZ4qPzEVDZ6tGpoai4KQEcXgPU=', 'Registered', 'Used', 'REG-JOHN-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', true)
+                                    ON CONFLICT (""Id"") DO UPDATE SET 
+                                        ""Name"" = EXCLUDED.""Name"",
+                                        ""Email"" = EXCLUDED.""Email"",
+                                        ""Designation"" = EXCLUDED.""Designation"",
+                                        ""Department"" = EXCLUDED.""Department"",
+                                        ""PasswordHash"" = EXCLUDED.""PasswordHash"",
+                                        ""RegistrationStatus"" = 'Registered',
+                                        ""ActivationCodeStatus"" = 'Used',
+                                        ""ActivationCode"" = EXCLUDED.""ActivationCode"",
+                                        ""ActivationCodeExpiry"" = EXCLUDED.""ActivationCodeExpiry"",
+                                        ""Role"" = EXCLUDED.""Role"",
+                                        ""IsDemo"" = true;
+
+                                    -- Upsert Real Company Users (with IsDemo = false)
+                                    INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"", ""IsDemo"")
+                                    VALUES 
+                                    ('emp-admin-001', 'Mayank Khandelwal', 'mayank@workflowglobal.com', 'System Administrator', 'IT', 0, '2020-01-01 00:00:00+00', 0, 0, 'v9a3tFBDqT0rQA9JwmZChOrETMYnobmNRr4RuMDEpo0=', 'Registered', 'Used', 'REG-MAYANK-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', false),
+                                    ('emp-hr-001', 'Darsh Khandelwal', 'darsh@workflowglobal.com', 'HR Manager', 'Human Resources', 1, '2020-03-15 00:00:00+00', 0, 0, 'nZm+XUELmxSPQW8EPkOlv0hYzpirvXcJUiZuOv5txRc=', 'Registered', 'Used', 'REG-DARSH-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', false),
+                                    ('emp-mgr-001', 'Parul Goyal', 'parul@workflowglobal.com', 'Engineering Manager', 'Engineering', 2, '2021-06-01 00:00:00+00', 0, 0, 'YkeL0AEnYhr9Q0T6gPc29T2PClGjI10U3q9EHzkS5Ng=', 'Registered', 'Used', 'REG-PARUL-123', '2028-01-01 00:00:00+00', NOW(), 'Employee', false)
+                                    ON CONFLICT (""Id"") DO UPDATE SET 
+                                        ""Name"" = EXCLUDED.""Name"",
+                                        ""Email"" = EXCLUDED.""Email"",
+                                        ""Designation"" = EXCLUDED.""Designation"",
+                                        ""Department"" = EXCLUDED.""Department"",
+                                        ""PasswordHash"" = EXCLUDED.""PasswordHash"",
+                                        ""RegistrationStatus"" = 'Registered',
+                                        ""ActivationCodeStatus"" = 'Used',
+                                        ""ActivationCode"" = EXCLUDED.""ActivationCode"",
+                                        ""ActivationCodeExpiry"" = EXCLUDED.""ActivationCodeExpiry"",
+                                        ""Role"" = EXCLUDED.""Role"",
+                                        ""IsDemo"" = false;
+
+                                    -- Upsert pending employees (preserve PasswordHash/RegistrationStatus if already self-registered)
+                                    INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""ManagerId"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"", ""IsDemo"")
+                                    VALUES 
+                                    ('emp-001', 'Varshita Sharma', 'varshita@workflowglobal.com', 'Senior Software Engineer', 'Engineering', 'emp-mgr-001', 3, '2022-01-10 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-VARSHITA-987', '2028-01-01 00:00:00+00', NOW(), 'Employee', false),
+                                    ('emp-002', 'Bhavishya Gupta', 'bhavishya@workflowglobal.com', 'Junior Developer', 'Engineering', 'emp-mgr-001', 3, '2023-05-01 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-BHAVISHYA-654', '2028-01-01 00:00:00+00', NOW(), 'Employee', false)
+                                    ON CONFLICT (""Id"") DO UPDATE SET
+                                        -- Only update activation code; preserve RegistrationStatus/PasswordHash if already registered
+                                        ""ActivationCode"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN EXCLUDED.""ActivationCode"" ELSE ""Employees"".""ActivationCode"" END,
+                                        ""ActivationCodeExpiry"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN EXCLUDED.""ActivationCodeExpiry"" ELSE ""Employees"".""ActivationCodeExpiry"" END,
+                                        ""ActivationCodeStatus"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN 'Unused' ELSE ""Employees"".""ActivationCodeStatus"" END,
+                                        ""IsDemo"" = false;
+
+                                    -- Fix any other existing employees that have NULL RegistrationStatus but have a PasswordHash (old data pre-migration)
+                                    UPDATE ""Employees"" SET ""RegistrationStatus"" = 'Registered' 
+                                    WHERE ""RegistrationStatus"" IS NULL AND ""PasswordHash"" IS NOT NULL AND ""PasswordHash"" != '';
+
+                                    -- Fix any existing employees with NULL RegistrationStatus and no password (set to Pending)
+                                    UPDATE ""Employees"" SET ""RegistrationStatus"" = 'Pending', ""ActivationCodeStatus"" = COALESCE(""ActivationCodeStatus"", 'Unused')
+                                    WHERE ""RegistrationStatus"" IS NULL AND (""PasswordHash"" IS NULL OR ""PasswordHash"" = '');
+                                ";
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            // Select and print all employees to verify seed data
+                            using (var cmd = context.Database.GetDbConnection().CreateCommand())
+                            {
+                                cmd.CommandText = @"SELECT ""Id"", ""Email"", ""RegistrationStatus"", ""PasswordHash"", ""ActivationCode"", ""IsDemo"" FROM ""Employees"";";
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    Console.WriteLine("--- SEEDED EMPLOYEES IN DB ---");
+                                    while (reader.Read())
+                                    {
+                                        Console.WriteLine($"ID: {reader["Id"]}, Email: {reader["Email"]}, Status: {reader["RegistrationStatus"]}, HasPasswordHash: {reader["PasswordHash"] != DBNull.Value}, Code: {reader["ActivationCode"]}, IsDemo: {reader["IsDemo"]}");
+                                    }
+                                    Console.WriteLine("------------------------------");
+                                }
+                            }
                         }
-
-                        // Step 2: Upsert seed employees with correct auth data
-                        using (var cmd = context.Database.GetDbConnection().CreateCommand())
+                        Console.WriteLine("PostgreSQL database initialized successfully");
+                        break; // Success, break retry loop
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Database initialization attempt {i} of {maxRetries} failed: {ex.Message}");
+                        if (i == maxRetries)
                         {
-                            cmd.CommandText = @"
-                                -- Upsert Admin, HR, Manager with full auth data (always overwrite so they can always log in)
-                                INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"")
-                                VALUES 
-                                ('emp-admin-001', 'Mayank Khandelwal', 'mayank@workflowglobal.com', 'System Administrator', 'IT', 0, '2020-01-01 00:00:00+00', 0, 0, 'v9a3tFBDqT0rQA9JwmZChOrETMYnobmNRr4RuMDEpo0=', 'Registered', 'Used', 'REG-MAYANK-123', '2028-01-01 00:00:00+00', NOW(), 'Employee'),
-                                ('emp-hr-001', 'Darsh Khandelwal', 'darsh@workflowglobal.com', 'HR Manager', 'Human Resources', 1, '2020-03-15 00:00:00+00', 0, 0, 'nZm+XUELmxSPQW8EPkOlv0hYzpirvXcJUiZuOv5txRc=', 'Registered', 'Used', 'REG-DARSH-123', '2028-01-01 00:00:00+00', NOW(), 'Employee'),
-                                ('emp-mgr-001', 'Parul Goyal', 'parul@workflowglobal.com', 'Engineering Manager', 'Engineering', 2, '2021-06-01 00:00:00+00', 0, 0, 'YkeL0AEnYhr9Q0T6gPc29T2PClGjI10U3q9EHzkS5Ng=', 'Registered', 'Used', 'REG-PARUL-123', '2028-01-01 00:00:00+00', NOW(), 'Employee')
-                                ON CONFLICT (""Id"") DO UPDATE SET 
-                                    ""Name"" = EXCLUDED.""Name"",
-                                    ""Email"" = EXCLUDED.""Email"",
-                                    ""Designation"" = EXCLUDED.""Designation"",
-                                    ""Department"" = EXCLUDED.""Department"",
-                                    ""PasswordHash"" = EXCLUDED.""PasswordHash"",
-                                    ""RegistrationStatus"" = 'Registered',
-                                    ""ActivationCodeStatus"" = 'Used',
-                                    ""ActivationCode"" = EXCLUDED.""ActivationCode"",
-                                    ""ActivationCodeExpiry"" = EXCLUDED.""ActivationCodeExpiry"",
-                                    ""Role"" = EXCLUDED.""Role"";
-
-                                -- Upsert pending employees (preserve PasswordHash/RegistrationStatus if already self-registered)
-                                INSERT INTO ""Employees"" (""Id"", ""Name"", ""Email"", ""Designation"", ""Department"", ""ManagerId"", ""Role"", ""JoiningDate"", ""Country"", ""Status"", ""PasswordHash"", ""RegistrationStatus"", ""ActivationCodeStatus"", ""ActivationCode"", ""ActivationCodeExpiry"", ""CreatedOn"", ""DocumentType"")
-                                VALUES 
-                                ('emp-001', 'Varshita Sharma', 'varshita@workflowglobal.com', 'Senior Software Engineer', 'Engineering', 'emp-mgr-001', 3, '2022-01-10 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-VARSHITA-987', '2028-01-01 00:00:00+00', NOW(), 'Employee'),
-                                ('emp-002', 'Bhavishya Khandelwal', 'bhavishya@workflowglobal.com', 'Junior Developer', 'Engineering', 'emp-mgr-001', 3, '2023-05-01 00:00:00+00', 0, 0, NULL, 'Pending', 'Unused', 'REG-BHAVISHYA-654', '2028-01-01 00:00:00+00', NOW(), 'Employee')
-                                ON CONFLICT (""Id"") DO UPDATE SET
-                                    -- Only update activation code; preserve RegistrationStatus/PasswordHash if already registered
-                                    ""ActivationCode"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN EXCLUDED.""ActivationCode"" ELSE ""Employees"".""ActivationCode"" END,
-                                    ""ActivationCodeExpiry"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN EXCLUDED.""ActivationCodeExpiry"" ELSE ""Employees"".""ActivationCodeExpiry"" END,
-                                    ""ActivationCodeStatus"" = CASE WHEN ""Employees"".""RegistrationStatus"" = 'Pending' THEN 'Unused' ELSE ""Employees"".""ActivationCodeStatus"" END;
-
-                                -- Fix any other existing employees that have NULL RegistrationStatus but have a PasswordHash (old data pre-migration)
-                                UPDATE ""Employees"" SET ""RegistrationStatus"" = 'Registered' 
-                                WHERE ""RegistrationStatus"" IS NULL AND ""PasswordHash"" IS NOT NULL AND ""PasswordHash"" != '';
-
-                                -- Fix any existing employees with NULL RegistrationStatus and no password (set to Pending)
-                                UPDATE ""Employees"" SET ""RegistrationStatus"" = 'Pending', ""ActivationCodeStatus"" = COALESCE(""ActivationCodeStatus"", 'Unused')
-                                WHERE ""RegistrationStatus"" IS NULL AND (""PasswordHash"" IS NULL OR ""PasswordHash"" = '');
-                            ";
-                            cmd.ExecuteNonQuery();
+                            Console.WriteLine("Error: Database initialization failed after maximum retries.");
+                        }
+                        else
+                        {
+                            await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                         }
                     }
-                    Console.WriteLine("PostgreSQL database initialized successfully");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error initializing PostgreSQL database: {ex.Message}");
                 }
             });
 
@@ -155,7 +207,8 @@ namespace HRMS.API
                         id = response.User.Id,
                         email = response.User.Email,
                         name = response.User.Name,
-                        role = response.User.Role.ToString()
+                        role = response.User.Role.ToString(),
+                        isDemo = response.User.IsDemo
                     }
                 });
             });
