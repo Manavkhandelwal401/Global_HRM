@@ -16,6 +16,8 @@ namespace EmployeeFeature.Domain
         public Country Country { get; set; } = Country.US;
         public Status Status { get; set; } = Status.Active;
         public string? PasswordHash { get; set; }
+        public string? RegistrationCode { get; set; }
+        public bool IsRegistered { get; set; } = false;
     }
 }
 

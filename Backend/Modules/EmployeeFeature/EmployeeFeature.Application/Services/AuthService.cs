@@ -2,6 +2,10 @@ using EmployeeFeature.Application.DTOs;
 using EmployeeFeature.Domain;
 using EmployeeFeature.Domain.Enums;
 using HRMS.Shared.Domain.Enum;
+using HRMS.Core.Postgres.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace EmployeeFeature.Application.Services
 {
@@ -10,190 +14,201 @@ namespace EmployeeFeature.Application.Services
         Task<LoginResponse> LoginAsync(LoginRequest request);
         Task<UserProfile?> GetCurrentUserAsync(string userId);
         Task<LoginResponse> SwitchDemoRoleAsync(string userId, EmployeeRole newRole);
+        Task<LoginResponse> SignupAsync(string employeeId, string email, string code, string password);
     }
 
     public class AuthService : IAuthService
     {
-        // In a real implementation, this would use a repository and proper password hashing
-        // For demo purposes, we're using a simplified approach
-        
-        private readonly Dictionary<string, string> _demoCredentials = new()
-        {
-            { "admin@workflowglobal.com", "Admin@2024" },
-            { "hr@workflowglobal.com", "Hr@2024" },
-            { "manager@workflowglobal.com", "Manager@2024" },
-            { "john.doe@workflowglobal.com", "Employee@2024" }
-        };
+        private readonly PostgresDbContext _dbContext;
+        private const string Salt = "GlobalHRMSalt";
 
-        private readonly Dictionary<string, Employee> _demoUsers = new()
+        public AuthService(PostgresDbContext dbContext)
         {
-            {
-                "emp-admin-001",
-                new Employee
-                {
-                    Id = "emp-admin-001",
-                    Name = "Admin User",
-                    Email = "admin@workflowglobal.com",
-                    Designation = "System Administrator",
-                    Department = "IT",
-                    Role = EmployeeRole.Admin,
-                    Country = Country.US,
-                    Status = Status.Active
-                }
-            },
-            {
-                "emp-hr-001",
-                new Employee
-                {
-                    Id = "emp-hr-001",
-                    Name = "HR Specialist",
-                    Email = "hr@workflowglobal.com",
-                    Designation = "HR Manager",
-                    Department = "Human Resources",
-                    Role = EmployeeRole.HR,
-                    Country = Country.US,
-                    Status = Status.Active
-                }
-            },
-            {
-                "emp-mgr-001",
-                new Employee
-                {
-                    Id = "emp-mgr-001",
-                    Name = "Team Manager",
-                    Email = "manager@workflowglobal.com",
-                    Designation = "Engineering Manager",
-                    Department = "Engineering",
-                    Role = EmployeeRole.Manager,
-                    Country = Country.US,
-                    Status = Status.Active
-                }
-            },
-            {
-                "emp-001",
-                new Employee
-                {
-                    Id = "emp-001",
-                    Name = "John Doe",
-                    Email = "john.doe@workflowglobal.com",
-                    Designation = "Senior Software Engineer",
-                    Department = "Engineering",
-                    Role = EmployeeRole.Employee,
-                    Country = Country.US,
-                    Status = Status.Active
-                }
-            }
-        };
+            _dbContext = dbContext;
+        }
 
-        public Task<LoginResponse> LoginAsync(LoginRequest request)
+        private string HashPassword(string password)
+        {
+            using var sha256 = SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password + Salt));
+            return Convert.ToBase64String(hashedBytes);
+        }
+
+        private bool VerifyPassword(string password, string hashedPassword)
+        {
+            return HashPassword(password) == hashedPassword;
+        }
+
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
             {
-                return Task.FromResult(new LoginResponse
+                return new LoginResponse
                 {
                     Success = false,
                     Message = "Email and password are required"
-                });
+                };
             }
 
-            if (!_demoCredentials.TryGetValue(request.Email.ToLower(), out var expectedPassword))
+            var employee = await _dbContext.Set<Employee>()
+                .FirstOrDefaultAsync(e => e.Email.ToLower() == request.Email.ToLower());
+
+            if (employee == null)
             {
-                return Task.FromResult(new LoginResponse
+                return new LoginResponse
                 {
                     Success = false,
                     Message = "Invalid credentials"
-                });
+                };
             }
 
-            if (request.Password != expectedPassword)
+            if (!employee.IsRegistered)
             {
-                return Task.FromResult(new LoginResponse
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Employee profile is not registered yet. Please sign up first."
+                };
+            }
+
+            if (string.IsNullOrEmpty(employee.PasswordHash) || !VerifyPassword(request.Password, employee.PasswordHash))
+            {
+                return new LoginResponse
                 {
                     Success = false,
                     Message = "Invalid credentials"
-                });
+                };
             }
 
-            var user = _demoUsers.Values.FirstOrDefault(u => u.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
-            
-            if (user == null)
-            {
-                return Task.FromResult(new LoginResponse
-                {
-                    Success = false,
-                    Message = "User not found"
-                });
-            }
-
-            return Task.FromResult(new LoginResponse
+            return new LoginResponse
             {
                 Success = true,
                 Message = "Login successful",
-                Token = $"demo-token-{user.Id}",
+                Token = $"demo-token-{employee.Id}", // Kept for Apollo auth header integration
                 User = new UserProfile
                 {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    Designation = user.Designation,
-                    Department = user.Department,
-                    Role = user.Role,
-                    Country = user.Country
+                    Id = employee.Id,
+                    Name = employee.Name,
+                    Email = employee.Email,
+                    Designation = employee.Designation,
+                    Department = employee.Department,
+                    Role = employee.Role,
+                    Country = employee.Country
                 }
-            });
+            };
         }
 
-        public Task<UserProfile?> GetCurrentUserAsync(string userId)
+        public async Task<UserProfile?> GetCurrentUserAsync(string userId)
         {
-            if (_demoUsers.TryGetValue(userId, out var user))
-            {
-                return Task.FromResult<UserProfile?>(new UserProfile
-                {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    Designation = user.Designation,
-                    Department = user.Department,
-                    Role = user.Role,
-                    Country = user.Country
-                });
-            }
+            var employee = await _dbContext.Set<Employee>().FindAsync(userId);
+            if (employee == null) return null;
 
-            return Task.FromResult<UserProfile?>(null);
+            return new UserProfile
+            {
+                Id = employee.Id,
+                Name = employee.Name,
+                Email = employee.Email,
+                Designation = employee.Designation,
+                Department = employee.Department,
+                Role = employee.Role,
+                Country = employee.Country
+            };
         }
 
-        public Task<LoginResponse> SwitchDemoRoleAsync(string userId, EmployeeRole newRole)
+        public async Task<LoginResponse> SwitchDemoRoleAsync(string userId, EmployeeRole newRole)
         {
-            if (!_demoUsers.TryGetValue(userId, out var user))
+            var employee = await _dbContext.Set<Employee>().FindAsync(userId);
+            if (employee == null)
             {
-                return Task.FromResult(new LoginResponse
+                return new LoginResponse
                 {
                     Success = false,
                     Message = "User not found"
-                });
+                };
             }
 
-            // Update the role temporarily for demo purposes
-            user.Role = newRole;
+            employee.Role = newRole;
+            await _dbContext.SaveChangesAsync();
 
-            return Task.FromResult(new LoginResponse
+            return new LoginResponse
             {
                 Success = true,
                 Message = $"Role switched to {newRole}",
-                Token = $"demo-token-{user.Id}",
+                Token = $"demo-token-{employee.Id}",
                 User = new UserProfile
                 {
-                    Id = user.Id,
-                    Name = user.Name,
-                    Email = user.Email,
-                    Designation = user.Designation,
-                    Department = user.Department,
-                    Role = user.Role,
-                    Country = user.Country
+                    Id = employee.Id,
+                    Name = employee.Name,
+                    Email = employee.Email,
+                    Designation = employee.Designation,
+                    Department = employee.Department,
+                    Role = employee.Role,
+                    Country = employee.Country
                 }
-            });
+            };
+        }
+
+        public async Task<LoginResponse> SignupAsync(string employeeId, string email, string code, string password)
+        {
+            if (string.IsNullOrWhiteSpace(employeeId) || string.IsNullOrWhiteSpace(email) || 
+                string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(password))
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "All fields are required"
+                };
+            }
+
+            var employee = await _dbContext.Set<Employee>().FindAsync(employeeId);
+            if (employee == null)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Employee ID not found. Only pre-created company profiles may register."
+                };
+            }
+
+            if (!employee.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Company email address does not match our records for this Employee ID."
+                };
+            }
+
+            if (employee.IsRegistered)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "This employee profile has already been registered."
+                };
+            }
+
+            if (string.IsNullOrEmpty(employee.RegistrationCode) || employee.RegistrationCode != code)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Invalid registration code."
+                };
+            }
+
+            // Register employee
+            employee.PasswordHash = HashPassword(password);
+            employee.IsRegistered = true;
+            employee.RegistrationCode = null; // Consume code
+
+            await _dbContext.SaveChangesAsync();
+
+            return new LoginResponse
+            {
+                Success = true,
+                Message = "Registration completed successfully. You can now log in."
+            };
         }
     }
 }
-
-// Made with Bob

@@ -20,6 +20,8 @@ namespace EmployeeFeature.Infrastructure.Data
                 entity.Property(e => e.Designation).HasMaxLength(100);
                 entity.Property(e => e.Department).HasMaxLength(100);
                 entity.Property(e => e.PasswordHash).HasMaxLength(500);
+                entity.Property(e => e.RegistrationCode).HasMaxLength(100);
+                entity.Property(e => e.IsRegistered).HasDefaultValue(false);
                 
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.HasIndex(e => e.ManagerId);

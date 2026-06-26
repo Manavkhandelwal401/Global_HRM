@@ -27,22 +27,27 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
 	useEffect(() => {
 		const token = getAccessToken();
-		// Demo auth bypass removed – always enforce authentication
 
 		if (token) {
 			try {
 				if (token.startsWith("demo-token")) {
 					const originalUserStr = localStorage.getItem("original-user");
-					const originalUser = originalUserStr ? JSON.parse(originalUserStr) : null;
-
-					const restoredUser: AuthUser = {
-						id: originalUser?.id || "EMP-004",
-						name: originalUser?.name || "John Doe",
-						email: originalUser?.email || "john.doe@workflowglobal.com",
-						role: (localStorage.getItem("demo-role") as any) || originalUser?.role || "Employee",
-					};
-					setUser(restoredUser);
-					dispatch(setCredentials({ user: restoredUser }));
+					if (originalUserStr) {
+						const originalUser = JSON.parse(originalUserStr);
+						const restoredUser: AuthUser = {
+							id: originalUser.id,
+							name: originalUser.name,
+							email: originalUser.email,
+							role: originalUser.role || "Employee",
+						};
+						setUser(restoredUser);
+						dispatch(setCredentials({ user: restoredUser }));
+					} else {
+						// Force redirect to login if no real session exists
+						setUser(null);
+						dispatch(clearCredentials());
+						clearAllAuthData();
+					}
 				} else {
 					const parts = token.split('.');
 					if (parts.length === 3) {
@@ -55,25 +60,20 @@ export function SessionProvider({ children }: PropsWithChildren) {
 						};
 						setUser(restoredUser);
 						dispatch(setCredentials({ user: restoredUser }));
-						localStorage.setItem("original-user", JSON.stringify({
-							id: restoredUser.id,
-							name: restoredUser.name,
-							email: restoredUser.email,
-							role: "Employee"
-						}));
+						localStorage.setItem("original-user", JSON.stringify(restoredUser));
 					}
 				}
 			} catch (e) {
 				console.error("Failed to parse access token:", e);
 			}
 
-	}
-}, [dispatch]);
+		}
+	}, [dispatch]);
 
 	const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
 		const res = await loginWithPassword(email, password);
 		const nextUser: AuthUser | null =
-			res.user ? { id: res.user.id, name: res.user.name, email: res.user.email, role: "Employee" } : null;
+			res.user ? { id: res.user.id, name: res.user.name, email: res.user.email, role: res.user.role } : null;
 		setUser(nextUser);
 		dispatch(setCredentials({ user: nextUser }));
 		if (nextUser) {

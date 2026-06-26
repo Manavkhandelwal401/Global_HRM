@@ -99,6 +99,18 @@ namespace HRMS.API
                 return Results.Ok(new { accessToken = "demo-refresh-token", refreshToken = "demo-refresh-token" });
             });
 
+            app.MapPost("/auth/signup", async (HttpContext context, IAuthService authService) =>
+            {
+                var request = await context.Request.ReadFromJsonAsync<SignupRequest>();
+                if (request == null) return Results.BadRequest("Invalid signup request");
+                var response = await authService.SignupAsync(request.EmployeeId, request.Email, request.RegistrationCode, request.Password);
+                if (!response.Success)
+                {
+                    return Results.Json(new { message = response.Message ?? "Registration failed" }, statusCode: 400);
+                }
+                return Results.Ok(new { message = response.Message });
+            });
+
             app.MapGraphQL()
                 .WithOptions(options =>
                 {
@@ -161,5 +173,13 @@ namespace HRMS.API
             //    );
             //});
         }
+    }
+
+    public class SignupRequest
+    {
+        public string EmployeeId { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string RegistrationCode { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

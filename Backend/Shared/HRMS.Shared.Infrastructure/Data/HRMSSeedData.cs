@@ -25,50 +25,56 @@ namespace HRMS.Shared.Infrastructure.Data
                 new Employee
                 {
                     Id = "emp-admin-001",
-                    Name = "Admin User",
-                    Email = "admin@workflowglobal.com",
+                    Name = "Mayank Khandelwal",
+                    Email = "mayank@workflowglobal.com",
                     Designation = "System Administrator",
                     Department = "IT",
                     Role = EmployeeRole.Admin,
                     JoiningDate = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     Country = Country.US,
                     Status = Status.Active,
-                    PasswordHash = "$2a$11$XYZ123", // Demo hash
+                    PasswordHash = "v9a3tFBDqT0rQA9JwmZChOrETMYnobmNRr4RuMDEpo0=",
+                    IsRegistered = true,
+                    RegistrationCode = "REG-MAYANK-123",
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
                 {
                     Id = "emp-hr-001",
-                    Name = "HR Specialist",
-                    Email = "hr@workflowglobal.com",
+                    Name = "Darsh Khandelwal",
+                    Email = "darsh@workflowglobal.com",
                     Designation = "HR Manager",
                     Department = "Human Resources",
                     Role = EmployeeRole.HR,
                     JoiningDate = new DateTime(2020, 3, 15, 0, 0, 0, DateTimeKind.Utc),
                     Country = Country.US,
                     Status = Status.Active,
-                    PasswordHash = "$2a$11$ABC456",
+                    PasswordHash = "nZm+XUELmxSPQW8EPkOlv0hYzpirvXcJUiZuOv5txRc=",
+                    IsRegistered = true,
+                    RegistrationCode = "REG-DARSH-123",
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
                 {
                     Id = "emp-mgr-001",
-                    Name = "Team Manager",
-                    Email = "manager@workflowglobal.com",
+                    Name = "Parul Goyal",
+                    Email = "parul@workflowglobal.com",
                     Designation = "Engineering Manager",
                     Department = "Engineering",
                     Role = EmployeeRole.Manager,
                     JoiningDate = new DateTime(2021, 6, 1, 0, 0, 0, DateTimeKind.Utc),
                     Country = Country.US,
                     Status = Status.Active,
-                    PasswordHash = "$2a$11$DEF789",
+                    PasswordHash = "YkeL0AEnYhr9Q0T6gPc29T2PClGjI10U3q9EHzkS5Ng=",
+                    IsRegistered = true,
+                    RegistrationCode = "REG-PARUL-123",
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
                 {
                     Id = "emp-001",
-                    Name = "John Doe",
-                    Email = "john.doe@workflowglobal.com",
+                    Name = "Varshita Sharma",
+                    Email = "varshita@workflowglobal.com",
                     Designation = "Senior Software Engineer",
                     Department = "Engineering",
                     ManagerId = "emp-mgr-001",
@@ -76,67 +82,26 @@ namespace HRMS.Shared.Infrastructure.Data
                     JoiningDate = new DateTime(2022, 1, 10, 0, 0, 0, DateTimeKind.Utc),
                     Country = Country.US,
                     Status = Status.Active,
-                    PasswordHash = "$2a$11$GHI012",
+                    PasswordHash = null,
+                    IsRegistered = false,
+                    RegistrationCode = "REG-VARSHITA-987",
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
                 {
                     Id = "emp-002",
-                    Name = "Jane Smith",
-                    Email = "jane.smith@workflowglobal.com",
-                    Designation = "Software Engineer",
-                    Department = "Engineering",
+                    Name = "Bhavishya Gupta",
+                    Email = "bhavishya@workflowglobal.com",
+                    Designation = "Marketing Associate",
+                    Department = "Marketing",
                     ManagerId = "emp-mgr-001",
                     Role = EmployeeRole.Employee,
                     JoiningDate = new DateTime(2022, 3, 20, 0, 0, 0, DateTimeKind.Utc),
                     Country = Country.IN,
                     Status = Status.Active,
-                    PasswordHash = "$2a$11$JKL345",
-                    CreatedOn = DateTime.UtcNow
-                },
-                new Employee
-                {
-                    Id = "emp-003",
-                    Name = "Mike Johnson",
-                    Email = "mike.johnson@workflowglobal.com",
-                    Designation = "QA Engineer",
-                    Department = "Quality Assurance",
-                    ManagerId = "emp-mgr-001",
-                    Role = EmployeeRole.Employee,
-                    JoiningDate = new DateTime(2022, 5, 15, 0, 0, 0, DateTimeKind.Utc),
-                    Country = Country.US,
-                    Status = Status.Active,
-                    PasswordHash = "$2a$11$MNO678",
-                    CreatedOn = DateTime.UtcNow
-                },
-                new Employee
-                {
-                    Id = "emp-004",
-                    Name = "Sarah Williams",
-                    Email = "sarah.williams@workflowglobal.com",
-                    Designation = "Product Designer",
-                    Department = "Design",
-                    ManagerId = "emp-mgr-001",
-                    Role = EmployeeRole.Employee,
-                    JoiningDate = new DateTime(2022, 7, 1, 0, 0, 0, DateTimeKind.Utc),
-                    Country = Country.IN,
-                    Status = Status.Active,
-                    PasswordHash = "$2a$11$PQR901",
-                    CreatedOn = DateTime.UtcNow
-                },
-                new Employee
-                {
-                    Id = "emp-005",
-                    Name = "David Brown",
-                    Email = "david.brown@workflowglobal.com",
-                    Designation = "DevOps Engineer",
-                    Department = "Engineering",
-                    ManagerId = "emp-mgr-001",
-                    Role = EmployeeRole.Employee,
-                    JoiningDate = new DateTime(2022, 9, 10, 0, 0, 0, DateTimeKind.Utc),
-                    Country = Country.US,
-                    Status = Status.Active,
-                    PasswordHash = "$2a$11$STU234",
+                    PasswordHash = null,
+                    IsRegistered = false,
+                    RegistrationCode = "REG-BHAVISHYA-654",
                     CreatedOn = DateTime.UtcNow
                 }
             };
@@ -429,60 +394,6 @@ namespace HRMS.Shared.Infrastructure.Data
                     ESI = 1000,
                     Deductions = 12400,
                     NetPay = 62600,
-                    Status = PayrollStatus.Paid,
-                    CreatedOn = DateTime.UtcNow
-                },
-                new PayrollRecord
-                {
-                    Id = "pay-003",
-                    EmployeeId = "EMP-003",
-                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
-                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
-                    BasicPay = 60000,
-                    HRA = 25000,
-                    Allowances = 20000,
-                    GrossPay = 105000,
-                    PF = 7200,
-                    IncomeTax = 12000,
-                    ESI = 1500,
-                    Deductions = 20700,
-                    NetPay = 84300,
-                    Status = PayrollStatus.Processed,
-                    CreatedOn = DateTime.UtcNow
-                },
-                new PayrollRecord
-                {
-                    Id = "pay-005",
-                    EmployeeId = "EMP-005",
-                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
-                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
-                    BasicPay = 75000,
-                    HRA = 30000,
-                    Allowances = 25000,
-                    GrossPay = 130000,
-                    PF = 9000,
-                    IncomeTax = 15000,
-                    ESI = 2000,
-                    Deductions = 26000,
-                    NetPay = 104000,
-                    Status = PayrollStatus.Paid,
-                    CreatedOn = DateTime.UtcNow
-                },
-                new PayrollRecord
-                {
-                    Id = "pay-005-lower",
-                    EmployeeId = "emp-005",
-                    PayPeriodStart = new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc),
-                    PayPeriodEnd = new DateTime(2026, 5, 31, 0, 0, 0, DateTimeKind.Utc),
-                    BasicPay = 75000,
-                    HRA = 30000,
-                    Allowances = 25000,
-                    GrossPay = 130000,
-                    PF = 9000,
-                    IncomeTax = 15000,
-                    ESI = 2000,
-                    Deductions = 26000,
-                    NetPay = 104000,
                     Status = PayrollStatus.Paid,
                     CreatedOn = DateTime.UtcNow
                 }
