@@ -34,8 +34,10 @@ namespace HRMS.Shared.Infrastructure.Data
                     Country = Country.US,
                     Status = Status.Active,
                     PasswordHash = "v9a3tFBDqT0rQA9JwmZChOrETMYnobmNRr4RuMDEpo0=",
-                    IsRegistered = true,
-                    RegistrationCode = "REG-MAYANK-123",
+                    RegistrationStatus = "Registered",
+                    ActivationCodeStatus = "Used",
+                    ActivationCode = "REG-MAYANK-123",
+                    ActivationCodeExpiry = DateTime.SpecifyKind(new DateTime(2028, 1, 1), DateTimeKind.Utc),
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
@@ -50,8 +52,10 @@ namespace HRMS.Shared.Infrastructure.Data
                     Country = Country.US,
                     Status = Status.Active,
                     PasswordHash = "nZm+XUELmxSPQW8EPkOlv0hYzpirvXcJUiZuOv5txRc=",
-                    IsRegistered = true,
-                    RegistrationCode = "REG-DARSH-123",
+                    RegistrationStatus = "Registered",
+                    ActivationCodeStatus = "Used",
+                    ActivationCode = "REG-DARSH-123",
+                    ActivationCodeExpiry = DateTime.SpecifyKind(new DateTime(2028, 1, 1), DateTimeKind.Utc),
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
@@ -66,8 +70,10 @@ namespace HRMS.Shared.Infrastructure.Data
                     Country = Country.US,
                     Status = Status.Active,
                     PasswordHash = "YkeL0AEnYhr9Q0T6gPc29T2PClGjI10U3q9EHzkS5Ng=",
-                    IsRegistered = true,
-                    RegistrationCode = "REG-PARUL-123",
+                    RegistrationStatus = "Registered",
+                    ActivationCodeStatus = "Used",
+                    ActivationCode = "REG-PARUL-123",
+                    ActivationCodeExpiry = DateTime.SpecifyKind(new DateTime(2028, 1, 1), DateTimeKind.Utc),
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
@@ -83,8 +89,10 @@ namespace HRMS.Shared.Infrastructure.Data
                     Country = Country.US,
                     Status = Status.Active,
                     PasswordHash = null,
-                    IsRegistered = false,
-                    RegistrationCode = "REG-VARSHITA-987",
+                    RegistrationStatus = "Pending",
+                    ActivationCodeStatus = "Unused",
+                    ActivationCode = "REG-VARSHITA-987",
+                    ActivationCodeExpiry = DateTime.SpecifyKind(new DateTime(2028, 1, 1), DateTimeKind.Utc),
                     CreatedOn = DateTime.UtcNow
                 },
                 new Employee
@@ -100,8 +108,10 @@ namespace HRMS.Shared.Infrastructure.Data
                     Country = Country.IN,
                     Status = Status.Active,
                     PasswordHash = null,
-                    IsRegistered = false,
-                    RegistrationCode = "REG-BHAVISHYA-654",
+                    RegistrationStatus = "Pending",
+                    ActivationCodeStatus = "Unused",
+                    ActivationCode = "REG-BHAVISHYA-654",
+                    ActivationCodeExpiry = DateTime.SpecifyKind(new DateTime(2028, 1, 1), DateTimeKind.Utc),
                     CreatedOn = DateTime.UtcNow
                 }
             };

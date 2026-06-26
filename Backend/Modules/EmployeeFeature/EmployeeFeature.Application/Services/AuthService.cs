@@ -62,7 +62,7 @@ namespace EmployeeFeature.Application.Services
                 };
             }
 
-            if (!employee.IsRegistered)
+            if (employee.RegistrationStatus != "Registered")
             {
                 return new LoginResponse
                 {
@@ -156,7 +156,7 @@ namespace EmployeeFeature.Application.Services
                 return new LoginResponse
                 {
                     Success = false,
-                    Message = "All fields are required"
+                    Message = "Employee verification failed."
                 };
             }
 
@@ -166,7 +166,7 @@ namespace EmployeeFeature.Application.Services
                 return new LoginResponse
                 {
                     Success = false,
-                    Message = "Employee ID not found. Only pre-created company profiles may register."
+                    Message = "Employee verification failed."
                 };
             }
 
@@ -175,32 +175,51 @@ namespace EmployeeFeature.Application.Services
                 return new LoginResponse
                 {
                     Success = false,
-                    Message = "Company email address does not match our records for this Employee ID."
+                    Message = "Employee verification failed."
                 };
             }
 
-            if (employee.IsRegistered)
+            if (employee.RegistrationStatus != "Pending")
             {
                 return new LoginResponse
                 {
                     Success = false,
-                    Message = "This employee profile has already been registered."
+                    Message = "Employee verification failed."
                 };
             }
 
-            if (string.IsNullOrEmpty(employee.RegistrationCode) || employee.RegistrationCode != code)
+            if (string.IsNullOrEmpty(employee.ActivationCode) || employee.ActivationCode != code)
             {
                 return new LoginResponse
                 {
                     Success = false,
-                    Message = "Invalid registration code."
+                    Message = "Employee verification failed."
+                };
+            }
+
+            if (employee.ActivationCodeStatus != "Unused")
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Employee verification failed."
+                };
+            }
+
+            if (employee.ActivationCodeExpiry.HasValue && employee.ActivationCodeExpiry.Value < DateTime.UtcNow)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Employee verification failed."
                 };
             }
 
             // Register employee
             employee.PasswordHash = HashPassword(password);
-            employee.IsRegistered = true;
-            employee.RegistrationCode = null; // Consume code
+            employee.RegistrationStatus = "Registered";
+            employee.ActivationCodeStatus = "Used";
+            employee.RegistrationTimestamp = DateTime.UtcNow;
 
             await _dbContext.SaveChangesAsync();
 

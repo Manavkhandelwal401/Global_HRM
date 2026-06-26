@@ -9,6 +9,7 @@ const LoginResponseSchema = z.object({
 			id: z.union([z.string(), z.number()]).transform(String),
 			email: z.string().email().optional(),
 			name: z.string().optional(),
+			role: z.string().optional(),
 			// extend as needed
 		})
 		.optional(),

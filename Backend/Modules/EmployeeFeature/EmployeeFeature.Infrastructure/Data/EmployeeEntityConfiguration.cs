@@ -20,8 +20,11 @@ namespace EmployeeFeature.Infrastructure.Data
                 entity.Property(e => e.Designation).HasMaxLength(100);
                 entity.Property(e => e.Department).HasMaxLength(100);
                 entity.Property(e => e.PasswordHash).HasMaxLength(500);
-                entity.Property(e => e.RegistrationCode).HasMaxLength(100);
-                entity.Property(e => e.IsRegistered).HasDefaultValue(false);
+                entity.Property(e => e.ActivationCode).HasMaxLength(100);
+                entity.Property(e => e.RegistrationStatus).HasMaxLength(50).HasDefaultValue("Pending");
+                entity.Property(e => e.ActivationCodeStatus).HasMaxLength(50).HasDefaultValue("Unused");
+                entity.Property(e => e.ActivationCodeExpiry);
+                entity.Property(e => e.RegistrationTimestamp);
                 
                 entity.HasIndex(e => e.Email).IsUnique();
                 entity.HasIndex(e => e.ManagerId);
