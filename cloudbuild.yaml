@@ -33,7 +33,7 @@ steps:
       - '--cpu=1'
       - '--min-instances=0'
       - '--max-instances=10'
-      - '--set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=true'
+      - '--set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false'
       - '--project=global-hrm-20230625'
 
 images:

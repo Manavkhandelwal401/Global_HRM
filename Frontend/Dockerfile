@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Build-time env vars (NEXT_PUBLIC_* must be available at build time in Next.js)
-ARG NEXT_PUBLIC_DISABLE_AUTH=true
+ARG NEXT_PUBLIC_DISABLE_AUTH=false
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:5056
 ARG NEXT_PUBLIC_GRAPHQL_URL=http://localhost:5056/graphql
 ENV NEXT_PUBLIC_DISABLE_AUTH=$NEXT_PUBLIC_DISABLE_AUTH

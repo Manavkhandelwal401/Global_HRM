@@ -2,11 +2,12 @@
 
 import { createContext, PropsWithChildren, useCallback, useContext, useMemo, useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { useApolloClient } from "@apollo/client/react";
 import { loginWithPassword, logout } from "../lib/auth/authService";
 import { setCredentials, clearCredentials, AuthUser } from "../store/authSlice";
 import { useMutation } from "@apollo/client/react";
 import { SWITCH_DEMO_ROLE } from "../graphql/mutation/switchDemoRole";
-import { getAccessToken } from "../lib/auth/tokenStorage";
+import { getAccessToken, clearAllAuthData } from "../lib/auth/tokenStorage";
 
 export type SessionContextValue = {
 	isAuthenticated: boolean;
@@ -26,7 +27,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
 	useEffect(() => {
 		const token = getAccessToken();
-		const disableAuth = process.env.NEXT_PUBLIC_DISABLE_AUTH === "true";
+		// Demo auth bypass removed – always enforce authentication
 
 		if (token) {
 			try {
@@ -65,41 +66,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
 			} catch (e) {
 				console.error("Failed to parse access token:", e);
 			}
-		} else if (disableAuth) {
-			const savedRole = localStorage.getItem("demo-role") || "Employee";
-			const originalUserStr = localStorage.getItem("original-user");
-			const originalUser = originalUserStr ? JSON.parse(originalUserStr) : null;
 
-			let id = originalUser?.id || "EMP-004";
-			let name = originalUser?.name || "John Doe";
-			let email = originalUser?.email || "john.doe@workflowglobal.com";
-
-			if (!originalUser) {
-				if (savedRole === "Admin") {
-					id = "EMP-001";
-					name = "Admin User";
-					email = "admin@workflowglobal.com";
-				} else if (savedRole === "HR") {
-					id = "EMP-002";
-					name = "HR User";
-					email = "hr@workflowglobal.com";
-				} else if (savedRole === "Manager") {
-					id = "EMP-003";
-					name = "Manager User";
-					email = "manager@workflowglobal.com";
-				}
-			}
-
-			const restoredUser: AuthUser = {
-				id,
-				name,
-				email,
-				role: savedRole as any,
-			};
-			setUser(restoredUser);
-			dispatch(setCredentials({ user: restoredUser }));
-		}
-	}, [dispatch]);
+	}
+}, [dispatch]);
 
 	const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
 		const res = await loginWithPassword(email, password);
@@ -112,52 +81,19 @@ export function SessionProvider({ children }: PropsWithChildren) {
 		}
 	}, [dispatch]);
 
+	const apolloClient = useApolloClient();
 	const signOut = useCallback(async () => {
-		await logout();
-		setUser(null);
-		dispatch(clearCredentials());
-		localStorage.removeItem("original-user");
-	}, [dispatch]);
+		  await logout();
+		  await apolloClient.clearStore();
+		  clearAllAuthData();
+		  setUser(null);
+		  dispatch(clearCredentials());
+	}, [dispatch, apolloClient]);
 
 	const switchRole = useCallback(async (newRole: string) => {
 		if (!user?.id) return;
 		
-		const disableAuth = process.env.NEXT_PUBLIC_DISABLE_AUTH === "true" || (typeof window !== "undefined" && getAccessToken()?.startsWith("demo-token"));
-		if (disableAuth) {
-			const originalUserStr = localStorage.getItem("original-user");
-			const originalUser = originalUserStr ? JSON.parse(originalUserStr) : null;
-
-			let id = originalUser?.id || "EMP-004";
-			let name = originalUser?.name || "John Doe";
-			let email = originalUser?.email || "john.doe@workflowglobal.com";
-
-			if (!originalUser) {
-				if (newRole === "Admin") {
-					id = "EMP-001";
-					name = "Admin User";
-					email = "admin@workflowglobal.com";
-				} else if (newRole === "HR") {
-					id = "EMP-002";
-					name = "HR User";
-					email = "hr@workflowglobal.com";
-				} else if (newRole === "Manager") {
-					id = "EMP-003";
-					name = "Manager User";
-					email = "manager@workflowglobal.com";
-				}
-			}
-
-			const updatedUser: AuthUser = {
-				id,
-				name,
-				email,
-				role: newRole as any,
-			};
-			setUser(updatedUser);
-			dispatch(setCredentials({ user: updatedUser }));
-			localStorage.setItem("demo-role", newRole);
-			return;
-		}
+		// Demo auth bypass removed – real role switching via GraphQL mutation
 		
 		try {
 			const { data } = await switchDemoRoleMutation({

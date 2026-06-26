@@ -69,3 +69,16 @@ export async function refreshAccessTokenSilently(): Promise<string | null> {
 }
 
 
+// Added utility to clear all authentication related data (cookies, localStorage, demo keys)
+export function clearAllAuthData() {
+  // Clear token cookie
+  Cookies.remove("auth_token", { path: "/" });
+  // Clear stored tokens
+  clearAccessToken();
+  clearRefreshToken();
+  // Remove demo-specific keys
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem("original-user");
+    window.localStorage.removeItem("demo-role");
+  }
+}

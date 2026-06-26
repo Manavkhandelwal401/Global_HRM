@@ -15,8 +15,7 @@ export function useAuthGuard() {
   const { isAuthenticated, user } = useSession();
 
   useEffect(() => {
-    const disableAuth = process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true';
-    if (disableAuth) return;
+// Auth bypass removed – enforce authentication
     if (!isAuthenticated) {
       const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
