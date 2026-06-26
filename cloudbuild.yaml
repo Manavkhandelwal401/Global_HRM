@@ -93,11 +93,11 @@ steps:
       - '-c'
       - |
         BACKEND_URL=$(cat /workspace/backend_url.txt)
-        echo "Building frontend with backend URL: $BACKEND_URL"
+        echo "Building frontend with backend URL: $$BACKEND_URL"
         docker build \
           --build-arg NEXT_PUBLIC_DISABLE_AUTH=false \
-          --build-arg NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL \
-          --build-arg NEXT_PUBLIC_GRAPHQL_URL=$BACKEND_URL/graphql \
+          --build-arg NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL \
+          --build-arg NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql \
           -t asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
           ./Frontend
     waitFor: ['deploy-backend']
@@ -122,7 +122,7 @@ steps:
       - '-c'
       - |
         BACKEND_URL=$(cat /workspace/backend_url.txt)
-        echo "Deploying frontend with backend: $BACKEND_URL"
+        echo "Deploying frontend with backend: $$BACKEND_URL"
         gcloud run deploy global-hrm-frontend \
           --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
           --region=us-central1 \
