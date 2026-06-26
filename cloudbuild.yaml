@@ -1,34 +1,5 @@
 steps:
   # ─────────────────────────────────────────────────────────────
-  # 0. Provision Cloud SQL (PostgreSQL) if it doesn't exist yet
-  # ─────────────────────────────────────────────────────────────
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'provision-cloudsql'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        if gcloud sql instances describe global-hrm-db --project=global-hrm-20230625 2>/dev/null; then
-          echo "Cloud SQL instance already exists."
-        else
-          echo "Creating Cloud SQL PostgreSQL instance..."
-          gcloud sql instances create global-hrm-db \
-            --database-version=POSTGRES_15 \
-            --cpu=1 \
-            --memory=3840MB \
-            --region=us-central1 \
-            --project=global-hrm-20230625 \
-            --root-password=Bnmqwe#123 \
-            --no-backup \
-            --storage-size=10GB \
-            --storage-type=SSD
-          gcloud sql databases create HRMS \
-            --instance=global-hrm-db \
-            --project=global-hrm-20230625 || true
-          echo "Cloud SQL ready."
-        fi
-
-  # ─────────────────────────────────────────────────────────────
   # 1. Build Backend Docker image
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/cloud-builders/docker'
@@ -39,7 +10,6 @@ steps:
       - 'asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-backend:latest'
       - '.'
     dir: 'Backend'
-    waitFor: ['provision-cloudsql']
 
   # ─────────────────────────────────────────────────────────────
   # 2. Push Backend image to Artifact Registry
@@ -52,7 +22,7 @@ steps:
     waitFor: ['build-backend']
 
   # ─────────────────────────────────────────────────────────────
-  # 3. Deploy Backend to Cloud Run, save URL to workspace file
+  # 3. Deploy Backend to Cloud Run (no Cloud SQL needed - auth is in-memory)
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-backend'
@@ -60,6 +30,8 @@ steps:
     args:
       - '-c'
       - |
+        set -e
+        echo "Deploying backend to Cloud Run..."
         gcloud run deploy global-hrm-backend \
           --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-backend:latest \
           --region=us-central1 \
@@ -70,21 +42,22 @@ steps:
           --cpu=1 \
           --min-instances=0 \
           --max-instances=5 \
-          --add-cloudsql-instances=global-hrm-20230625:us-central1:global-hrm-db \
-          --set-env-vars=ASPNETCORE_ENVIRONMENT=Production,SKIP_KEYVAULT=true,ConnectionStrings__Postgres__ConnectionString=Host=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db;Database=HRMS;Username=postgres;Password=Bnmqwe#123,Cors__AllowedOrigins__0=https://globalhrm.me,Cors__AllowedOrigins__1=https://www.globalhrm.me,Cors__AllowedOrigins__2=https://global-hrm-frontend-230429510558.us-central1.run.app \
+          --set-env-vars=ASPNETCORE_ENVIRONMENT=Production,SKIP_KEYVAULT=true,Cors__AllowedOrigins__0=https://globalhrm.me,Cors__AllowedOrigins__1=https://www.globalhrm.me,Cors__AllowedOrigins__2=https://global-hrm-frontend-230429510558.us-central1.run.app \
           --project=global-hrm-20230625
 
-        # Save backend URL to workspace file for next steps
-        gcloud run services describe global-hrm-backend \
+        echo "Getting backend URL..."
+        BACKEND_URL=$(gcloud run services describe global-hrm-backend \
           --region=us-central1 \
           --project=global-hrm-20230625 \
-          --format='value(status.url)' > /workspace/backend_url.txt
+          --format='value(status.url)')
 
-        echo "Backend deployed at: $(cat /workspace/backend_url.txt)"
+        echo "Backend URL: $BACKEND_URL"
+        echo -n "$BACKEND_URL" > /workspace/backend_url.txt
+        cat /workspace/backend_url.txt
     waitFor: ['push-backend']
 
   # ─────────────────────────────────────────────────────────────
-  # 4. Build Frontend image with backend URL injected
+  # 4. Build Frontend image with backend URL injected at build time
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-frontend'
@@ -92,12 +65,17 @@ steps:
     args:
       - '-c'
       - |
+        set -e
         BACKEND_URL=$(cat /workspace/backend_url.txt)
-        echo "Building frontend with backend URL: $$BACKEND_URL"
+        echo "Backend URL from file: $BACKEND_URL"
+        if [ -z "$BACKEND_URL" ]; then
+          echo "ERROR: backend_url.txt is empty!"
+          exit 1
+        fi
         docker build \
           --build-arg NEXT_PUBLIC_DISABLE_AUTH=false \
-          --build-arg NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL \
-          --build-arg NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql \
+          --build-arg NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL \
+          --build-arg NEXT_PUBLIC_GRAPHQL_URL=$BACKEND_URL/graphql \
           -t asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
           ./Frontend
     waitFor: ['deploy-backend']
@@ -113,7 +91,7 @@ steps:
     waitFor: ['build-frontend']
 
   # ─────────────────────────────────────────────────────────────
-  # 6. Deploy Frontend to Cloud Run with backend env vars
+  # 6. Deploy Frontend to Cloud Run
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-frontend'
@@ -121,8 +99,8 @@ steps:
     args:
       - '-c'
       - |
+        set -e
         BACKEND_URL=$(cat /workspace/backend_url.txt)
-        echo "Deploying frontend with backend: $$BACKEND_URL"
         gcloud run deploy global-hrm-frontend \
           --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
           --region=us-central1 \
@@ -135,6 +113,7 @@ steps:
           --max-instances=10 \
           --set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
           --project=global-hrm-20230625
+        echo "Frontend deployed!"
     waitFor: ['push-frontend']
 
 images:
