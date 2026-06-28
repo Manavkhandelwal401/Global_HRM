@@ -39,3 +39,16 @@ yarn-debug.log*
 scratch/
 spec_items.json
 spec_verification_report.md
+
+# ===== Python/Django ignores =====
+Backend/venv/
+Backend/db.sqlite3
+Backend/test_db.sqlite3
+Backend/**/__pycache__/
+Backend/**/*.json
+Backend/**/*.html
+Backend/**/*.log
+**/node_modules/
+**/.next/
+Backend_CSharp/
+JECRC Assessment/

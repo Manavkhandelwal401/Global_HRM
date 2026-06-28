@@ -1,66 +1,206 @@
 # WorkFlow: Global Human Resource Management System (HRMS)
 
-WorkFlow is a mobile-first, role-aware Global HRMS designed for multi-country operations (initially US and India). It is built as a modular monolith using a .NET backend, PostgreSQL database, Next.js/React frontend with Tailwind CSS, and GraphQL.
+WorkFlow is a mobile-first, role-aware Global HRMS designed for multi-country operations (initially US and India). It is built as a modular Django REST + GraphQL backend, PostgreSQL database, Next.js/React frontend with Tailwind CSS, and Strawberry GraphQL.
 
 ## Technology Stack
 
-- **Backend**: .NET Core (Modular Monolithic Architecture)
-- **Database**: PostgreSQL (Npgsql Entity Framework Provider / migrations)
-- **Frontend**: Next.js (React.js) using App Router, Zustand, and Redux Toolkit
-- **Styling**: Tailwind CSS
-- **API**: GraphQL via HotChocolate (.NET) and Apollo Client (Next.js)
+| Layer | Technology |
+|---|---|
+| **Backend** | Python 3.12 + Django 5.0 |
+| **API** | Strawberry GraphQL + Django REST Framework |
+| **Authentication** | JWT (SimpleJWT) |
+| **Database** | PostgreSQL (via django.db.backends.postgresql) |
+| **Frontend** | Next.js 14 (App Router) + TypeScript |
+| **Styling** | Tailwind CSS |
+| **Deployment** | Google Cloud Run (asia-south1) |
+| **Container Registry** | Google Artifact Registry |
+| **CI/CD** | Google Cloud Build |
+
+---
+
+## Architecture Overview
+
+```
+Client (Browser)
+    │
+    ▼
+Google Cloud Run — Frontend (Next.js)
+    │  HTTPS requests
+    ▼
+Google Cloud Run — Backend (Django/Gunicorn)
+    │
+    ├── /graphql       — Strawberry GraphQL endpoint
+    ├── /api/          — REST API (auth, health)
+    └── /health/       — Health check endpoint
+    │
+    ▼
+Cloud SQL — PostgreSQL
+```
 
 ---
 
 ## Directory Structure
 
 ```text
-PropVivo/
-├── Backend/                 # ASP.NET Core Modular Monolith
-│   ├── API/HRMS.API/        # Main API Host Startup
-│   ├── Modules/             # HRMS Features (TodoFeature, EmployeeFeature, etc.)
-│   └── Shared/              # Shared Application/Infrastructure projects
-├── Frontend/                # Next.js App Router Web Application
-│   ├── app/                 # Routes and Views
-│   ├── components/          # Reusable UI Components
-│   └── graphql/             # GraphQL Queries/Mutations definitions
-├── docs/                    # Technical & Walkthrough Documentation
-│   └── part-reports/        # Part-by-part reports & interview guides
-└── README.md                # Root setup instructions
+Global_HRM/
+├── Backend/                       # Python / Django backend
+│   ├── api/                       # Django app (models, views, resolvers)
+│   │   ├── models.py              # Employee, Leave, Attendance, Payroll, etc.
+│   │   ├── schema.py              # Strawberry GraphQL schema
+│   │   ├── views.py               # REST views (login, signup, health)
+│   │   └── urls.py
+│   ├── hrms_backend/              # Django project settings
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   ├── Dockerfile                 # Production Docker image
+│   └── requirements.txt
+├── Frontend/                      # Next.js App Router Web Application
+│   ├── app/                       # Routes and page components
+│   ├── components/                # Reusable UI components
+│   ├── context/                   # React context (auth, theme, toast)
+│   ├── graphql/                   # GraphQL queries & mutations
+│   └── middleware.ts              # Route protection middleware
+├── cloudbuild.yaml                # Cloud Build CI/CD pipeline
+├── docs/                          # Technical documentation
+│   └── part-reports/              # Architecture & verification reports
+└── README.md
 ```
 
 ---
 
-## Setup and Run Instructions
+## User Roles
 
-### 1. Prerequisites
-- [.NET SDK 8.0 or 10.0](https://dotnet.microsoft.com/download)
-- [Node.js (v18+)](https://nodejs.org/)
-- [PostgreSQL Database Server](https://www.postgresql.org/)
+| Role | Description |
+|---|---|
+| **Admin** | Full system access, user management, org settings |
+| **HR** | Employee management, leave approvals, payroll |
+| **Manager** | Team attendance, leave approvals, performance reviews |
+| **Employee** | Personal dashboard, leave requests, payroll, expenses |
 
-### 2. Database Setup
-Create a PostgreSQL database named `workflow_db` or configure the connection string in the backend.
+---
 
-### 3. Running the Backend API
-1. Open a terminal and navigate to the `Backend/API/HRMS.API` directory.
-2. Configure the database connection string in `appsettings.json`.
-3. Run the following commands:
-   ```bash
-   dotnet restore
-   dotnet run
-   ```
-4. The API server will start (usually on `https://localhost:7136` or `http://localhost:5147`). You can verify by visiting `/graphql` in your browser.
+## Demo Accounts
 
-### 4. Running the Frontend App
-1. Open a terminal and navigate to the `Frontend/` directory.
-2. Create your `.env.local` file by copying `.env.example`:
-   ```bash
-   cp .env.example .env.local
-   ```
-3. Configure the GraphQL endpoint in `.env.local` to point to the backend API URL.
-4. Install dependencies and run:
-   ```bash
-   npm install
-   npm run dev
-   ```
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@globalhrm.com | Admin@123 |
+| HR | hr@globalhrm.com | Hr@12345 |
+| Manager | manager@globalhrm.com | Manager@123 |
+| Employee | employee@globalhrm.com | Employee@123 |
+
+---
+
+## Setup — Local Development
+
+### Prerequisites
+- [Python 3.12](https://www.python.org/downloads/)
+- [Node.js v18+](https://nodejs.org/)
+- [PostgreSQL 15+](https://www.postgresql.org/)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Manavkhandelwal401/Global_HRM.git
+cd Global_HRM
+```
+
+### 2. Backend Setup
+
+```bash
+cd Backend
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+Create a `.env` file in the `Backend/` directory:
+
+```env
+DB_NAME=globalhrm
+DB_USER=postgres
+DB_PASS=yourpassword
+DB_HOST=localhost
+DB_PORT=5432
+SECRET_KEY=your-secret-key
+DEBUG=True
+```
+
+Run migrations and start the server:
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+Backend will be available at `http://localhost:8000`  
+GraphQL playground: `http://localhost:8000/graphql`
+
+### 3. Frontend Setup
+
+```bash
+cd Frontend
+npm install
+```
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_GRAPHQL_URL=http://localhost:8000/graphql
+```
+
+```bash
+npm run dev
+```
+
+Frontend will be available at `http://localhost:3000`
+
+---
+
+## Production Deployment
+
+The application is deployed on **Google Cloud Run** via **Google Cloud Build**.
+
+- **Frontend**: `https://global-hrm-frontend-230429510558.asia-south1.run.app`
+- **Backend**: Deployed as `global-hrm-backend` on Cloud Run (asia-south1)
+- **Database**: Google Cloud SQL — PostgreSQL
+
+To trigger a production deployment:
+
+```bash
+gcloud builds submit --config cloudbuild.yaml --project=global-hrm-20230625
+```
+
+---
+
+## API Reference
+
+### Health Check
+```
+GET /health/
+Response: { "status": "ok", "database": "connected", "graphql": "ready" }
+```
+
+### Authentication
+```
+POST /api/auth/login/     — Login with email + password → returns JWT tokens
+POST /api/auth/signup/    — Register employee with activation code
+POST /api/auth/refresh/   — Refresh access token
+POST /api/auth/logout/    — Invalidate refresh token
+```
+
+### GraphQL
+```
+POST /graphql             — All GraphQL queries and mutations
+```
+
+---
+
+## Legacy Code
+
+The `Backend_CSharp/` directory contains the original .NET/HotChocolate/Entity Framework prototype. It is **not used in production** and is kept for historical reference only. All production traffic is served by the Django backend.
