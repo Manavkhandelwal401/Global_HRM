@@ -9,7 +9,10 @@ export const GET_HR_METRICS = gql`
         highRiskEmployees
       }
       diversity {
-        byDepartment
+        byDepartment {
+          department
+          score
+        }
         overallDiversityScore
       }
       training {

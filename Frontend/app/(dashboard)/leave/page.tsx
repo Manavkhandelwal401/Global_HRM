@@ -252,6 +252,7 @@ export default function LeavePage() {
     }
 
     try {
+      const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
       await submitLeaveRequest({
         variables: {
           request: {
@@ -259,6 +260,7 @@ export default function LeavePage() {
             leaveType,
             startDate: start.toISOString(),
             endDate: end.toISOString(),
+            totalDays,
             reason,
           },
         },

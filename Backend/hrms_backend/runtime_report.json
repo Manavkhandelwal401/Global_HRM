@@ -1,0 +1,154 @@
+{
+  "HealthEndpoint": {
+    "status": "PASS",
+    "request": "GET /health/",
+    "response": {
+      "status": "ok",
+      "database": "connected",
+      "graphql": "ready",
+      "version": "1.0.0",
+      "timestamp": "2026-06-28T16:42:52.703058+00:00"
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "GraphQLIntrospection": {
+    "status": "PASS",
+    "request": "Introspection Query",
+    "response": {
+      "data": {
+        "__schema": {
+          "queryType": {
+            "name": "Query"
+          }
+        }
+      }
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "Login_Valid": {
+    "status": "PASS",
+    "request": "POST /auth/login {'email': 'mayank@workflowglobal.com', 'password': 'AdminPassword123'}",
+    "response": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJlbXAtYWRtaW4tMDAxIiwidW5pcXVlX25hbWUiOiJNYXlhbmsgS2hhbmRlbHdhbCIsImVtYWlsIjoibWF5YW5rQHdvcmtmbG93Z2xvYmFsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlzRGVtbyI6dHJ1ZSwiZXhwIjoxNzgzMjY5NzcyLCJpYXQiOjE3ODI2NjQ5NzJ9.UCW3tthzDtESydraFFgDvQbR0ldagDgjrZt2G6dvGro",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJlbXAtYWRtaW4tMDAxIiwidW5pcXVlX25hbWUiOiJNYXlhbmsgS2hhbmRlbHdhbCIsImVtYWlsIjoibWF5YW5rQHdvcmtmbG93Z2xvYmFsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlzRGVtbyI6dHJ1ZSwiZXhwIjoxNzgzMjY5NzcyLCJpYXQiOjE3ODI2NjQ5NzJ9.UCW3tthzDtESydraFFgDvQbR0ldagDgjrZt2G6dvGro",
+      "user": {
+        "id": "emp-admin-001",
+        "email": "mayank@workflowglobal.com",
+        "name": "Mayank Khandelwal",
+        "role": "Admin",
+        "isDemo": true
+      }
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "Login_Invalid": {
+    "status": "PASS",
+    "request": "POST /auth/login {'email': 'mayank@workflowglobal.com', 'password': 'WrongPassword'}",
+    "response": {
+      "message": "Invalid credentials"
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "getCurrentUser_Auth": {
+    "status": "PASS",
+    "request": "getCurrentUser query with token",
+    "response": {
+      "data": {
+        "getCurrentUser": {
+          "id": "emp-admin-001",
+          "name": "Mayank Khandelwal",
+          "email": "mayank@workflowglobal.com",
+          "role": "Admin"
+        }
+      }
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "GraphQLAuthorization": {
+    "status": "PASS",
+    "request": "getCurrentUser query without token",
+    "response": {
+      "data": {
+        "getCurrentUser": null
+      }
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "Signup_ActivationCode": {
+    "status": "PASS",
+    "request": "POST /auth/signup {'employeeId': 'emp-001', 'email': 'varshita@workflowglobal.com', 'registrationCode': 'REG-VARSHITA-987', 'password': 'NewUserPassword123'}",
+    "response": {
+      "message": "Registration completed successfully. You can now log in."
+    },
+    "database": [
+      [
+        "Registered",
+        "Used"
+      ]
+    ],
+    "errors": "N/A"
+  },
+  "Signup_InvalidCode": {
+    "status": "PASS",
+    "request": "POST /auth/signup {'employeeId': 'emp-002', 'email': 'jane.smith@workflowglobal.com', 'registrationCode': 'WRONG-CODE', 'password': 'NewUserPassword123'}",
+    "response": {
+      "message": "Employee verification failed."
+    },
+    "database": "N/A",
+    "errors": "N/A"
+  },
+  "Attendance_ClockIn": {
+    "status": "PASS",
+    "request": "\n    mutation {\n        clockIn(employeeId: \"emp-admin-001\") {\n            id\n            date\n            status\n            clockIn\n        }\n    }\n    ",
+    "response": {
+      "data": {
+        "clockIn": {
+          "id": "c7948afc-6eec-451d-8b18-45c121b42ff2",
+          "date": "2026-06-28",
+          "status": "Present",
+          "clockIn": "2026-06-28T06:10:01.540551+00:00"
+        }
+      }
+    },
+    "database": [
+      [
+        0
+      ]
+    ],
+    "errors": "N/A"
+  },
+  "LeaveWorkflow_Submit": {
+    "status": "PASS",
+    "request": "\n    mutation {\n        submitLeaveRequest(request: {\n            employeeId: \"emp-admin-001\",\n            leaveType: \"Casual\",\n            startDate: \"2026-07-01T09:00:00Z\",\n            endDate: \"2026-07-02T18:00:00Z\",\n            totalDays: 2.0,\n            reason: \"Vacation\"\n        }) {\n            id\n            status\n            totalDays\n        }\n    }\n    ",
+    "response": {
+      "data": {
+        "submitLeaveRequest": {
+          "id": "9a17d0f2-9b29-48c6-b3ab-530ca1957d83",
+          "status": "Pending",
+          "totalDays": "2.0"
+        }
+      }
+    },
+    "database": {
+      "requests": [
+        [
+          0,
+          2
+        ]
+      ],
+      "balances": [
+        [
+          2,
+          13
+        ]
+      ]
+    },
+    "errors": "N/A"
+  }
+}

@@ -45,7 +45,10 @@ export default function AnalyticsPage() {
     return [];
   };
 
-  const diversityDeps = parseMetricData(metrics.diversity.byDepartment, '%');
+  const rawDiversity = metrics.diversity.byDepartment;
+  const diversityDeps = Array.isArray(rawDiversity) 
+    ? rawDiversity.map((d: any) => `${d.department}: ${d.score}%`)
+    : parseMetricData(rawDiversity, '%');
   const leaveData = parseMetricData(metrics.leave.patternsByMonth);
 
   return (

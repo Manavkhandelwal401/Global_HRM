@@ -18,7 +18,6 @@ export default function DashboardLayout({
 
   const handleRoleSwitch = async (newRole: EmployeeRole) => {
     await switchRole(newRole);
-    console.log('Switching role to:', newRole);
   };
 
   // Provide a safe fallback if user is null

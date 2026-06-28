@@ -250,7 +250,6 @@ export default function TrainingPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => {
-                    console.log('Continuing module:', selectedModule.id);
                     setSelectedModule(null);
                   }}
                   className="flex-1 px-6 py-3 bg-primary text-white rounded-md hover:opacity-90 transition-colors font-medium"
