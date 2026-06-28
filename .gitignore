@@ -42,13 +42,30 @@ spec_verification_report.md
 
 # ===== Python/Django ignores =====
 Backend/venv/
-Backend/db.sqlite3
-Backend/test_db.sqlite3
+Backend/*.sqlite3
+Backend/*.db
 Backend/**/__pycache__/
-Backend/**/*.json
 Backend/**/*.html
 Backend/**/*.log
 **/node_modules/
 **/.next/
 Backend_CSharp/
 JECRC Assessment/
+
+# ===== Secrets & Environment =====
+Backend/.env
+Backend/.env.*
+**/.env
+**/.env.*
+
+# ===== Data Dumps & Seed Files (local dev only) =====
+Backend/*_dump.json
+Backend/*_dump_*.json
+Backend/production_dump.json
+Backend/production_seed.json
+Backend/balances_dump.json
+
+# ===== Runtime Reports & Test Artifacts =====
+Backend/full_verification_suite.py
+Backend/**/*_report.json
+Backend/**/*_report.html
