@@ -1,17 +1,21 @@
+# ═══════════════════════════════════════════════════════════════
+# Global HRM Backend — Production Requirements
+# Only TOP-LEVEL direct dependencies are pinned.
+# Transitive dependencies are resolved by pip at build time.
+# ═══════════════════════════════════════════════════════════════
+
 # ─── Core Framework ───────────────────────────────────────────
 Django==5.2.3
-asgiref==3.8.1
-sqlparse==0.5.3
 
 # ─── REST API + JWT Auth ──────────────────────────────────────
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 PyJWT==2.9.0
 
-# ─── GraphQL (Strawberry) — versions must be aligned ──────────
+# ─── GraphQL (Strawberry) ─────────────────────────────────────
 # strawberry-graphql-django 0.86.4 requires:
-#   django>=5.2  ✓ (5.2.3)
-#   strawberry-graphql>=0.310.1  ✓ (0.319.0)
+#   django>=5.2          ✓ (5.2.3 above)
+#   strawberry-graphql>=0.310.1  ✓ (0.319.0 satisfies)
 strawberry-graphql==0.319.0
 strawberry-graphql-django==0.86.4
 
@@ -23,23 +27,12 @@ psycopg2-binary==2.9.10
 
 # ─── Password Hashing ─────────────────────────────────────────
 argon2-cffi==23.1.0
-argon2-cffi-bindings==21.2.0
 
 # ─── Environment / Config ─────────────────────────────────────
 python-dotenv==1.0.1
 
 # ─── HTTP / Utilities ─────────────────────────────────────────
 requests==2.32.3
-certifi==2024.12.14
-charset-normalizer==3.4.1
-idna==3.10
-urllib3==2.3.0
 
-# ─── Date / Time ──────────────────────────────────────────────
-python-dateutil==2.9.0.post0
-six==1.17.0
-tzdata==2024.2
-
-# ─── Misc ─────────────────────────────────────────────────────
-packaging==24.2
-typing_extensions==4.12.2
+# ─── Web Server ───────────────────────────────────────────────
+gunicorn==23.0.0
