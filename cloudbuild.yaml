@@ -74,7 +74,7 @@ steps:
           --min-instances=0 \
           --max-instances=5 \
           --add-cloudsql-instances=global-hrm-20230625:us-central1:global-hrm-db \
-          --set-env-vars=DB_HOST=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db \
+          --update-env-vars=DB_HOST=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db \
           --update-env-vars=DB_NAME=HRMS \
           --update-env-vars=DB_USER=postgres \
           --update-env-vars=DB_PASS=Bnmqwe#123 \
