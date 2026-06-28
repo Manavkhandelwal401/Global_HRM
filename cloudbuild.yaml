@@ -80,7 +80,7 @@ steps:
           --update-env-vars=DB_PASS=Bnmqwe#123 \
           --update-env-vars=DB_PORT=5432 \
           --update-env-vars=DEBUG=False \
-          --update-env-vars=ALLOWED_HOSTS=globalhrm.me \
+          --update-env-vars=ALLOWED_HOSTS=* \
           --update-env-vars=SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6 \
           --update-env-vars=CORS_ALLOW_ALL_ORIGINS=True \
           --project=global-hrm-20230625
