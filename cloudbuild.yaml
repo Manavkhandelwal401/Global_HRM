@@ -30,7 +30,7 @@ steps:
         fi
 
   # ─────────────────────────────────────────────────────────────
-  # 1. Build Backend Docker image
+  # 1. Build Backend Docker image (Django)
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-backend'
@@ -53,7 +53,7 @@ steps:
     waitFor: ['build-backend']
 
   # ─────────────────────────────────────────────────────────────
-  # 3. Deploy Backend to Cloud Run
+  # 3. Deploy Backend (Django) to Cloud Run + run migrations
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-backend'
@@ -62,7 +62,7 @@ steps:
       - '-c'
       - |
         set -e
-        echo "Deploying backend to Cloud Run..."
+        echo "Deploying Django backend to Cloud Run (us-central1)..."
         gcloud run deploy global-hrm-backend \
           --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-backend:latest \
           --region=us-central1 \
@@ -74,7 +74,16 @@ steps:
           --min-instances=0 \
           --max-instances=5 \
           --add-cloudsql-instances=global-hrm-20230625:us-central1:global-hrm-db \
-          --set-env-vars=ASPNETCORE_ENVIRONMENT=Production,SKIP_KEYVAULT=true,ConnectionStrings__Postgres__ConnectionString="Host=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db;Database=HRMS;Username=postgres;Password=Bnmqwe#123",Cors__AllowedOrigins__0=https://globalhrm.me,Cors__AllowedOrigins__1=https://www.globalhrm.me,Cors__AllowedOrigins__2=https://global-hrm-frontend-230429510558.us-central1.run.app \
+          --set-env-vars="\
+DB_HOST=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db,\
+DB_NAME=HRMS,\
+DB_USER=postgres,\
+DB_PASS=Bnmqwe#123,\
+DB_PORT=5432,\
+DEBUG=False,\
+ALLOWED_HOSTS=globalhrm.me;www.globalhrm.me;global-hrm-backend-dt3kthqh7a-uc.a.run.app,\
+CORS_ALLOWED_ORIGINS=https://globalhrm.me;https://www.globalhrm.me;https://global-hrm-frontend-dt3kthqh7a-uc.a.run.app,\
+SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6ahjvxr8cv" \
           --project=global-hrm-20230625
 
         echo "Getting backend URL..."
@@ -123,7 +132,7 @@ steps:
     waitFor: ['build-frontend']
 
   # ─────────────────────────────────────────────────────────────
-  # 6. Deploy Frontend to Cloud Run
+  # 6. Deploy Frontend to Cloud Run (us-central1 — mapped to globalhrm.me)
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-frontend'
@@ -133,6 +142,7 @@ steps:
       - |
         set -e
         BACKEND_URL=$$(cat /workspace/backend_url.txt)
+        echo "Deploying frontend to Cloud Run (us-central1)..."
         gcloud run deploy global-hrm-frontend \
           --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
           --region=us-central1 \
@@ -143,9 +153,27 @@ steps:
           --cpu=1 \
           --min-instances=0 \
           --max-instances=10 \
-          --set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
+          --set-env-vars="NEXT_PUBLIC_DISABLE_AUTH=false,NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL,NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql" \
           --project=global-hrm-20230625
-        echo "Frontend deployed!"
+        echo "Frontend deployed to us-central1!"
+
+        # Also update asia-south1 service if it exists (keep in sync)
+        if gcloud run services describe global-hrm-frontend --region=asia-south1 --project=global-hrm-20230625 2>/dev/null; then
+          echo "Updating asia-south1 frontend as well..."
+          gcloud run deploy global-hrm-frontend \
+            --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
+            --region=asia-south1 \
+            --platform=managed \
+            --allow-unauthenticated \
+            --port=8080 \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --set-env-vars="NEXT_PUBLIC_DISABLE_AUTH=false,NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL,NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql" \
+            --project=global-hrm-20230625
+          echo "Asia-south1 frontend updated!"
+        fi
     waitFor: ['push-frontend']
 
 images:
