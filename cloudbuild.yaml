@@ -151,8 +151,7 @@ steps:
           --memory=512Mi \
           --cpu=1 \
           --min-instances=0 \
-          --max-instances=10 \
-          --set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
+          --update-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
           --update-env-vars=NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL \
           --update-env-vars=NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql \
           --project=global-hrm-20230625
@@ -170,7 +169,7 @@ steps:
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
-            --set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
+            --update-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
             --update-env-vars=NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL \
             --update-env-vars=NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql \
             --project=global-hrm-20230625
