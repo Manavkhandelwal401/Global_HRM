@@ -42,6 +42,7 @@ spec_verification_report.md
 
 # ===== Python/Django ignores =====
 Backend/venv/
+Backend/audit_venv/
 Backend/*.sqlite3
 Backend/*.db
 Backend/**/__pycache__/

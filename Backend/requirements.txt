@@ -13,17 +13,14 @@ djangorestframework-simplejwt==5.3.1
 PyJWT==2.9.0
 
 # ─── GraphQL (Strawberry) ─────────────────────────────────────
-# strawberry-graphql-django 0.86.4 requires:
-#   django>=5.2          ✓ (5.2.3 above)
-#   strawberry-graphql>=0.310.1  ✓ (0.319.0 satisfies)
 strawberry-graphql==0.319.0
 strawberry-graphql-django==0.86.4
 
 # ─── CORS ─────────────────────────────────────────────────────
 django-cors-headers==4.7.0
 
-# ─── Database ─────────────────────────────────────────────────
-psycopg2-binary==2.9.10
+# ─── Database (psycopg v3 is default for Django 5.2+) ────────
+psycopg[binary]==3.3.4
 
 # ─── Password Hashing ─────────────────────────────────────────
 argon2-cffi==23.1.0
