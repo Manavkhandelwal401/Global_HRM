@@ -53,7 +53,7 @@ steps:
     waitFor: ['build-backend']
 
   # ─────────────────────────────────────────────────────────────
-  # 3. Deploy Backend (Django) to Cloud Run + run migrations
+  # 3. Deploy Backend (Django) to Cloud Run
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-backend'
@@ -74,16 +74,15 @@ steps:
           --min-instances=0 \
           --max-instances=5 \
           --add-cloudsql-instances=global-hrm-20230625:us-central1:global-hrm-db \
-          --set-env-vars="\
-DB_HOST=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db,\
-DB_NAME=HRMS,\
-DB_USER=postgres,\
-DB_PASS=Bnmqwe#123,\
-DB_PORT=5432,\
-DEBUG=False,\
-ALLOWED_HOSTS=globalhrm.me;www.globalhrm.me;global-hrm-backend-dt3kthqh7a-uc.a.run.app,\
-CORS_ALLOWED_ORIGINS=https://globalhrm.me;https://www.globalhrm.me;https://global-hrm-frontend-dt3kthqh7a-uc.a.run.app,\
-SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6ahjvxr8cv" \
+          --set-env-vars=DB_HOST=/cloudsql/global-hrm-20230625:us-central1:global-hrm-db \
+          --update-env-vars=DB_NAME=HRMS \
+          --update-env-vars=DB_USER=postgres \
+          --update-env-vars=DB_PASS=Bnmqwe#123 \
+          --update-env-vars=DB_PORT=5432 \
+          --update-env-vars=DEBUG=False \
+          --update-env-vars=ALLOWED_HOSTS=globalhrm.me \
+          --update-env-vars=SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6 \
+          --update-env-vars=CORS_ALLOW_ALL_ORIGINS=True \
           --project=global-hrm-20230625
 
         echo "Getting backend URL..."
@@ -108,7 +107,7 @@ SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6ahjvxr8cv" \
       - |
         set -e
         BACKEND_URL=$$(cat /workspace/backend_url.txt)
-        echo "Backend URL from file: $$BACKEND_URL"
+        echo "Backend URL: $$BACKEND_URL"
         if [ -z "$$BACKEND_URL" ]; then
           echo "ERROR: backend_url.txt is empty!"
           exit 1
@@ -132,7 +131,7 @@ SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6ahjvxr8cv" \
     waitFor: ['build-frontend']
 
   # ─────────────────────────────────────────────────────────────
-  # 6. Deploy Frontend to Cloud Run (us-central1 — mapped to globalhrm.me)
+  # 6. Deploy Frontend to Cloud Run (us-central1 - domain mapped)
   # ─────────────────────────────────────────────────────────────
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'deploy-frontend'
@@ -153,13 +152,14 @@ SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6ahjvxr8cv" \
           --cpu=1 \
           --min-instances=0 \
           --max-instances=10 \
-          --set-env-vars="NEXT_PUBLIC_DISABLE_AUTH=false,NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL,NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql" \
+          --set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
+          --update-env-vars=NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL \
+          --update-env-vars=NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql \
           --project=global-hrm-20230625
         echo "Frontend deployed to us-central1!"
 
-        # Also update asia-south1 service if it exists (keep in sync)
         if gcloud run services describe global-hrm-frontend --region=asia-south1 --project=global-hrm-20230625 2>/dev/null; then
-          echo "Updating asia-south1 frontend as well..."
+          echo "Updating asia-south1 frontend..."
           gcloud run deploy global-hrm-frontend \
             --image=asia-south1-docker.pkg.dev/global-hrm-20230625/global-hrm-repo/global-hrm-frontend:latest \
             --region=asia-south1 \
@@ -170,7 +170,9 @@ SECRET_KEY=django-secure-prod-key-globalhrm-2024-xp9mn7it2m5hy3l4e6ahjvxr8cv" \
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
-            --set-env-vars="NEXT_PUBLIC_DISABLE_AUTH=false,NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL,NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql" \
+            --set-env-vars=NEXT_PUBLIC_DISABLE_AUTH=false \
+            --update-env-vars=NEXT_PUBLIC_API_BASE_URL=$$BACKEND_URL \
+            --update-env-vars=NEXT_PUBLIC_GRAPHQL_URL=$$BACKEND_URL/graphql \
             --project=global-hrm-20230625
           echo "Asia-south1 frontend updated!"
         fi
