@@ -688,29 +688,70 @@ class Query:
 
     @strawberry.field
     def getPendingLeaveApprovals(self, managerId: str) -> List[LeaveRequestDto]:
-        subordinates = Employee.objects.filter(manager_id=managerId)
-        sub_ids = [s.id for s in subordinates]
-        sub_map = {s.id: s.name for s in subordinates}
+        try:
+            approver = Employee.objects.get(id=managerId)
+            approver_role = approver.role
+        except Employee.DoesNotExist:
+            return []
+
+        # If employee sent the leave, it goes to Admin, HR, and Manager.
+        # If HR sent the leave, it goes to Admin and Manager.
+        # If Manager sent the leave, it goes to Admin.
+        # Otherwise, check subordinates (manager_id).
         
-        requests = LeaveRequest.objects.filter(employee_id__in=sub_ids, status="Pending").order_by('-created_on')
+        # Let's build a query for pending leave requests based on the role of the requester
+        from django.db.models import Q
+        
+        # Get pending leave requests
+        pending_requests = LeaveRequest.objects.filter(status="Pending").order_by('-created_on')
+        
         dtos = []
-        for r in requests:
-            dtos.append(LeaveRequestDto(
-                id=r.id,
-                employeeId=r.employee_id,
-                employeeName=sub_map.get(r.employee_id, "Unknown"),
-                leaveType=r.leave_type,
-                startDate=r.start_date.isoformat(),
-                endDate=r.end_date.isoformat(),
-                totalDays=r.total_days,
-                reason=r.reason,
-                status=r.status,
-                approvalComments=r.approval_comments,
-                approvedBy=r.approved_by,
-                approvedByName=None,
-                approvedOn=r.approved_on.isoformat() if r.approved_on else None,
-                createdAt=r.created_on.isoformat() if r.created_on else ""
-            ))
+        for r in pending_requests:
+            try:
+                requester = Employee.objects.get(id=r.employee_id)
+                requester_role = requester.role
+            except Employee.DoesNotExist:
+                continue
+            
+            should_approve = False
+            
+            # Leave sent by Employee -> goes to Admin, HR, Manager
+            if requester_role == "Employee":
+                if approver_role in ["Admin", "HR"] or requester.manager_id == managerId:
+                    should_approve = True
+            
+            # Leave sent by HR -> goes to Admin, Manager
+            elif requester_role == "HR":
+                if approver_role in ["Admin", "Manager"] or requester.manager_id == managerId:
+                    should_approve = True
+                    
+            # Leave sent by Manager -> goes to Admin, Manager (their manager/admin)
+            elif requester_role == "Manager":
+                if approver_role == "Admin" or requester.manager_id == managerId:
+                    should_approve = True
+            
+            # Leave sent by Admin -> goes to other Admins or manager
+            elif requester_role == "Admin":
+                if approver_role == "Admin" or requester.manager_id == managerId:
+                    should_approve = True
+
+            if should_approve:
+                dtos.append(LeaveRequestDto(
+                    id=r.id,
+                    employeeId=r.employee_id,
+                    employeeName=requester.name,
+                    leaveType=r.leave_type,
+                    startDate=r.start_date.isoformat(),
+                    endDate=r.end_date.isoformat(),
+                    totalDays=r.total_days,
+                    reason=r.reason,
+                    status=r.status,
+                    approvalComments=r.approval_comments,
+                    approvedBy=r.approved_by,
+                    approvedByName=None,
+                    approvedOn=r.approved_on.isoformat() if r.approved_on else None,
+                    createdAt=r.created_on.isoformat() if r.created_on else ""
+                ))
         return dtos
 
     @strawberry.field
@@ -2312,6 +2353,57 @@ class Mutation:
                 success=False,
                 message="Todo not found",
                 data=None
+            )
+
+    @strawberry.mutation
+    def createEmployee(
+        self,
+        employeeId: str,
+        name: str,
+        email: str,
+        position: str,
+        department: str,
+        role: str,
+        activationCode: str,
+        managerId: Optional[str] = None
+    ) -> Optional[TeamDirectoryDto]:
+        with transaction.atomic():
+            # Check if employee with same ID or email already exists
+            if Employee.objects.filter(id=employeeId).exists() or Employee.objects.filter(email__iexact=email).exists():
+                raise Exception("Employee ID or Email already exists")
+            
+            # Map role string to enum integer
+            role_mappings = {"Admin": 0, "HR": 1, "Manager": 2, "Employee": 3}
+            role_val = role_mappings.get(role, 3)
+
+            emp = Employee.objects.create(
+                id=employeeId,
+                name=name,
+                email=email,
+                designation=position,
+                department=department,
+                role=role_val,
+                activation_code=activationCode,
+                registration_status="Pending",
+                activation_code_status="Unused",
+                is_demo=False
+            )
+
+            # Auto-seed leave balances for the new employee
+            LeaveBalance.objects.create(employee_id=employeeId, leave_type="Casual", total_allowed=15, available=15, used=0, pending=0)
+            LeaveBalance.objects.create(employee_id=employeeId, leave_type="Sick", total_allowed=10, available=10, used=0, pending=0)
+            LeaveBalance.objects.create(employee_id=employeeId, leave_type="Personal", total_allowed=5, available=5, used=0, pending=0)
+
+            return TeamDirectoryDto(
+                id=emp.id,
+                fullName=emp.name,
+                email=emp.email,
+                position=emp.designation or "Employee",
+                department=emp.department or "General",
+                managerId=emp.manager_id,
+                managerName=None,
+                status=emp.status,
+                profilePictureUrl=None
             )
 
     @strawberry.mutation

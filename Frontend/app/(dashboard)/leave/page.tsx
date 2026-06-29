@@ -676,6 +676,38 @@ export default function LeavePage() {
             </div>
           </div>
 
+          {startDate && endDate && (() => {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            if (end >= start) {
+              const requestedDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+              const balanceObj = leaveBalances.find(b => b.leaveType === leaveType);
+              const available = balanceObj ? balanceObj.available : 0;
+              if (requestedDays > available) {
+                return (
+                  <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <Umbrella className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                          Exceeding Limit Warning
+                        </h3>
+                        <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                          <p>
+                            You are requesting {requestedDays} days of leave, but you only have {available} days available. You are exceeding the limit!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+            }
+            return null;
+          })()}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Reason (Optional)
@@ -702,7 +734,19 @@ export default function LeavePage() {
             </button>
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || (() => {
+                if (startDate && endDate) {
+                  const start = new Date(startDate);
+                  const end = new Date(endDate);
+                  if (end >= start) {
+                    const requestedDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+                    const balanceObj = leaveBalances.find(b => b.leaveType === leaveType);
+                    const available = balanceObj ? balanceObj.available : 0;
+                    return requestedDays > available;
+                  }
+                }
+                return false;
+              })()}
               className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? "Submitting..." : "Submit Request"}

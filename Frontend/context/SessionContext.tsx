@@ -7,7 +7,7 @@ import { loginWithPassword, logout } from "../lib/auth/authService";
 import { setCredentials, clearCredentials, AuthUser } from "../store/authSlice";
 import { useMutation } from "@apollo/client/react";
 import { SWITCH_DEMO_ROLE } from "../graphql/mutation/switchDemoRole";
-import { getAccessToken, clearAllAuthData } from "../lib/auth/tokenStorage";
+import { getAccessToken, clearAllAuthData, refreshAccessTokenSilently } from "../lib/auth/tokenStorage";
 
 export type SessionContextValue = {
 	isAuthenticated: boolean;
@@ -26,50 +26,61 @@ export function SessionProvider({ children }: PropsWithChildren) {
 	const [switchDemoRoleMutation] = useMutation<any, any>(SWITCH_DEMO_ROLE);
 
 	useEffect(() => {
-		const token = getAccessToken();
-
-		if (token) {
-			try {
-				if (token.startsWith("demo-token")) {
-					const originalUserStr = localStorage.getItem("original-user");
-					if (originalUserStr) {
-						const originalUser = JSON.parse(originalUserStr);
-						const restoredUser: AuthUser = {
-							id: originalUser.id,
-							name: originalUser.name,
-							email: originalUser.email,
-							role: originalUser.role || "Employee",
-							isDemo: originalUser.isDemo ?? true,
-						};
-						setUser(restoredUser);
-						dispatch(setCredentials({ user: restoredUser }));
-					} else {
-						// Force redirect to login if no real session exists
-						setUser(null);
-						dispatch(clearCredentials());
-						clearAllAuthData();
-					}
-				} else {
-					const parts = token.split('.');
-					if (parts.length === 3) {
-						const payload = JSON.parse(atob(parts[1]));
-						const restoredUser: AuthUser = {
-							id: payload.nameid || payload.sub || payload.id || "EMP-001",
-							name: payload.unique_name || payload.name || "John Doe",
-							email: payload.email || "john.doe@workflow.com",
-							role: payload.role || "Employee",
-							isDemo: payload.isDemo === "true" || payload.isDemo === true,
-						};
-						setUser(restoredUser);
-						dispatch(setCredentials({ user: restoredUser }));
-						localStorage.setItem("original-user", JSON.stringify(restoredUser));
-					}
-				}
-			} catch (e) {
-				console.error("Failed to parse access token:", e);
+		async function restoreSession() {
+			let token = getAccessToken();
+			
+			// Try silent refresh if no active token is in-memory/localStorage
+			if (!token) {
+				token = await refreshAccessTokenSilently();
 			}
 
+			if (token) {
+				try {
+					if (token.startsWith("demo-token")) {
+						const originalUserStr = localStorage.getItem("original-user");
+						if (originalUserStr) {
+							const originalUser = JSON.parse(originalUserStr);
+							const restoredUser: AuthUser = {
+								id: originalUser.id,
+								name: originalUser.name,
+								email: originalUser.email,
+								role: originalUser.role || "Employee",
+								isDemo: originalUser.isDemo ?? true,
+							};
+							setUser(restoredUser);
+							dispatch(setCredentials({ user: restoredUser }));
+						} else {
+							setUser(null);
+							dispatch(clearCredentials());
+							clearAllAuthData();
+						}
+					} else {
+						const parts = token.split('.');
+						if (parts.length === 3) {
+							const payload = JSON.parse(atob(parts[1]));
+							const restoredUser: AuthUser = {
+								id: payload.nameid || payload.sub || payload.id || "EMP-001",
+								name: payload.unique_name || payload.name || "John Doe",
+								email: payload.email || "john.doe@workflow.com",
+								role: payload.role || "Employee",
+								isDemo: payload.isDemo === "true" || payload.isDemo === true,
+							};
+							setUser(restoredUser);
+							dispatch(setCredentials({ user: restoredUser }));
+							localStorage.setItem("original-user", JSON.stringify(restoredUser));
+						}
+					}
+				} catch (e) {
+					console.error("Failed to parse access token:", e);
+				}
+			} else {
+				setUser(null);
+				dispatch(clearCredentials());
+				clearAllAuthData();
+			}
 		}
+
+		restoreSession();
 	}, [dispatch]);
 
 	const login = useCallback(async ({ email, password }: { email: string; password: string }) => {

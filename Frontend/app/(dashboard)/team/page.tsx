@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { GET_TEAM_DIRECTORY, GET_ORG_CHART } from '@/graphql/query/team';
+import { CREATE_EMPLOYEE } from '@/graphql/mutation/createEmployee';
 import { useSession } from '@/context/SessionContext';
 import { LoadingState } from '@/components/shared/LoadingState';
 import { ErrorState } from '@/components/shared/ErrorState';
@@ -65,20 +66,62 @@ export default function TeamPage() {
 
   // Form states for adding new employee
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newEmpId, setNewEmpId] = useState('');
   const [newEmpName, setNewEmpName] = useState('');
   const [newEmpPosition, setNewEmpPosition] = useState('');
   const [newEmpDept, setNewEmpDept] = useState('');
   const [newEmpEmail, setNewEmpEmail] = useState('');
   const [newEmpRole, setNewEmpRole] = useState('Employee');
+  const [newEmpActivationCode, setNewEmpActivationCode] = useState('');
+  const [newEmpManagerId, setNewEmpManagerId] = useState('');
 
-  const handleAddEmployee = (e: React.FormEvent) => {
+  const [createEmployeeMutation] = useMutation<any, any>(CREATE_EMPLOYEE, {
+    refetchQueries: [{ query: GET_TEAM_DIRECTORY, variables: { search: search || null, statusFilter: statusFilter || null } }],
+    onError: (err) => {
+      showToast(err.message, "error");
+    }
+  });
+
+  const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmpName || !newEmpPosition || !newEmpDept || !newEmpEmail) {
+    if (!newEmpId || !newEmpName || !newEmpPosition || !newEmpDept || !newEmpEmail || !newEmpActivationCode) {
       showToast("Please fill all fields", "error");
       return;
     }
 
-    const newId = `EMP-00${demoMembers.length + 1}`;
+    if (!useDemoMode) {
+      try {
+        const response = await createEmployeeMutation({
+          variables: {
+            employeeId: newEmpId,
+            name: newEmpName,
+            email: newEmpEmail,
+            position: newEmpPosition,
+            department: newEmpDept,
+            role: newEmpRole,
+            activationCode: newEmpActivationCode,
+            managerId: newEmpManagerId || null
+          }
+        });
+        if (response.data?.createEmployee) {
+          showToast(`Successfully recruited ${newEmpName} with ID ${newEmpId}!`, "success");
+          setIsAddModalOpen(false);
+          setNewEmpId('');
+          setNewEmpName('');
+          setNewEmpPosition('');
+          setNewEmpDept('');
+          setNewEmpEmail('');
+          setNewEmpRole('Employee');
+          setNewEmpActivationCode('');
+          setNewEmpManagerId('');
+        }
+      } catch (err) {
+        // Handled by onError callback or try/catch
+      }
+      return;
+    }
+
+    const newId = newEmpId;
     const newMember = {
       id: newId,
       fullName: newEmpName,
@@ -123,11 +166,14 @@ export default function TeamPage() {
     localStorage.setItem("demo-onboarding", JSON.stringify(checklistMap));
 
     // Reset form states
+    setNewEmpId('');
     setNewEmpName('');
     setNewEmpPosition('');
     setNewEmpDept('');
     setNewEmpEmail('');
     setNewEmpRole('Employee');
+    setNewEmpActivationCode('');
+    setNewEmpManagerId('');
     setIsAddModalOpen(false);
     showToast(`Successfully added ${newEmpName} with ID ${newId}! Onboarding initiated.`, "success");
   };
@@ -148,7 +194,7 @@ export default function TeamPage() {
             Browse directory and discover direct report alignments
           </p>
         </div>
-        {useDemoMode && user && user.role !== "Employee" && (
+        {user && user.role !== "Employee" && (
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:opacity-90 cursor-pointer"
@@ -315,6 +361,36 @@ export default function TeamPage() {
         size="lg"
       >
         <form onSubmit={handleAddEmployee} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Employee ID
+              </label>
+              <input
+                type="text"
+                value={newEmpId}
+                onChange={(e) => setNewEmpId(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g. emp-005"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Activation Code
+              </label>
+              <input
+                type="text"
+                value={newEmpActivationCode}
+                onChange={(e) => setNewEmpActivationCode(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g. REG-DONALD-123"
+                required
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Full Name
@@ -359,18 +435,33 @@ export default function TeamPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={newEmpEmail}
-              onChange={(e) => setNewEmpEmail(e.target.value)}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              placeholder="e.g. donald.duck@workflow.com"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Official Company Email
+              </label>
+              <input
+                type="email"
+                value={newEmpEmail}
+                onChange={(e) => setNewEmpEmail(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g. donald.duck@workflow.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Reports To (Manager ID - Optional)
+              </label>
+              <input
+                type="text"
+                value={newEmpManagerId}
+                onChange={(e) => setNewEmpManagerId(e.target.value)}
+                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="e.g. emp-mgr-001"
+              />
+            </div>
           </div>
 
           <div>
@@ -385,6 +476,8 @@ export default function TeamPage() {
             >
               <option value="Employee">Employee (Common checklist + Dev workstation setup)</option>
               <option value="Manager">Manager (Common checklist + Leadership training)</option>
+              <option value="HR">HR Manager</option>
+              <option value="Admin">Administrator</option>
             </select>
           </div>
 
